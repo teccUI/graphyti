@@ -73,5 +73,24 @@ Image with typography and icon size specifications:
 ![alt text](<Graph Visualizer/annotations.png>)
 
 
+**Phase 1: Minimum Viable Product (MVP)**
+
+F1.1: Pre-defined Graph Library: A dropdown menu to select from a curated list of foundational 3D graphs. 
+
+F1.2: 3D Visualization Canvas:
+A dedicated, large area of the screen where the selected graph is rendered.
+
+F1.3: Core Camera Controls:
+Rotate: 360-degree orbital rotation of the camera around the graph using mouse controls.
+Zoom: Zoom in and out on the graph using mouse controls.
+Pan: Move the camera's viewpoint left, right, up, and down using mouse controls.
+
+F1.4: Axes and Grid Display:
+Display of labeled X, Y, and Z axes and a ground plane grid to provide spatial context.
+
+F1.5: Formula Display:
+The mathematical formula for the currently displayed graph is always visible on-screen.
+
+
 
 The current App.tsx contains Vite boilerplate code that will need to be replaced with the actual 3D graph visualization implementation.
