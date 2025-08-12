@@ -2,6 +2,7 @@ import { Box, IconButton, ButtonGroup, Tooltip, Typography } from '@mui/material
 import { Plus, Minus, ArrowsClockwise, ArrowsOutCardinal, ArrowLineLeft } from 'phosphor-react'
 import { Canvas, useThree } from '@react-three/fiber'
 import { OrbitControls, Grid, Text } from '@react-three/drei'
+import * as THREE from 'three'
 import { useRef, useState } from 'react'
 import GraphRenderer from '../GraphRenderer'
 
@@ -136,9 +137,78 @@ export default function RightCanvas({ selectedGraph }: RightCanvasProps) {
           />
           
           {/* Grid and Axes */}
-          <Grid args={[20, 20]} />
+          {/* XZ Ground Plane Grid Lines */}
+          <group rotation={[-Math.PI / 2, 0, 0]}>
+            {Array.from({ length: 21 }, (_, i) => {
+              const pos = i - 10;
+              return (
+                <group key={`xz-grid-${i}`}>
+                  {/* Horizontal lines */}
+                  <line>
+                    <bufferGeometry>
+                      <bufferAttribute 
+                        attach="attributes-position"
+                        count={2}
+                        array={new Float32Array([-10, pos, 0, 10, pos, 0])}
+                        itemSize={3}
+                      />
+                    </bufferGeometry>
+                    <lineBasicMaterial color="#e0e0e0" transparent opacity={0.3} />
+                  </line>
+                  {/* Vertical lines */}
+                  <line>
+                    <bufferGeometry>
+                      <bufferAttribute 
+                        attach="attributes-position"
+                        count={2}
+                        array={new Float32Array([pos, -10, 0, pos, 10, 0])}
+                        itemSize={3}
+                      />
+                    </bufferGeometry>
+                    <lineBasicMaterial color="#e0e0e0" transparent opacity={0.3} />
+                  </line>
+                </group>
+              );
+            })}
+          </group>
+          
+          {/* YZ Plane Grid Lines */}
+          <group rotation={[0, Math.PI / 2, 0]}>
+            {Array.from({ length: 21 }, (_, i) => {
+              const pos = i - 10;
+              return (
+                <group key={`yz-grid-${i}`}>
+                  {/* Horizontal lines */}
+                  <line>
+                    <bufferGeometry>
+                      <bufferAttribute 
+                        attach="attributes-position"
+                        count={2}
+                        array={new Float32Array([-10, pos, 0, 10, pos, 0])}
+                        itemSize={3}
+                      />
+                    </bufferGeometry>
+                    <lineBasicMaterial color="#e0e0e0" transparent opacity={0.3} />
+                  </line>
+                  {/* Vertical lines */}
+                  <line>
+                    <bufferGeometry>
+                      <bufferAttribute 
+                        attach="attributes-position"
+                        count={2}
+                        array={new Float32Array([pos, -10, 0, pos, 10, 0])}
+                        itemSize={3}
+                      />
+                    </bufferGeometry>
+                    <lineBasicMaterial color="#e0e0e0" transparent opacity={0.3} />
+                  </line>
+                </group>
+              );
+            })}
+          </group>
           
           {/* X, Y, Z Axes Labels */}
+          {/* Positive X */}
           <Text
             position={[10.5, 0, 0]}
             rotation={[0, 0, 0]}
@@ -149,6 +219,19 @@ export default function RightCanvas({ selectedGraph }: RightCanvasProps) {
           >
             X
           </Text>
+          {/* Negative X */}
+          <Text
+            position={[-10.5, 0, 0]}
+            rotation={[0, 0, 0]}
+            fontSize={0.8}
+            color="red"
+            anchorX="center"
+            anchorY="middle"
+          >
+            -X
+          </Text>
+          
+          {/* Positive Y */}
           <Text
             position={[0, 10.5, 0]}
             rotation={[0, 0, 0]}
@@ -159,6 +242,19 @@ export default function RightCanvas({ selectedGraph }: RightCanvasProps) {
           >
             Y
           </Text>
+          {/* Negative Y */}
+          <Text
+            position={[0, -10.5, 0]}
+            rotation={[0, 0, 0]}
+            fontSize={0.8}
+            color="green"
+            anchorX="center"
+            anchorY="middle"
+          >
+            -Y
+          </Text>
+          
+          {/* Positive Z */}
           <Text
             position={[0, 0, 10.5]}
             rotation={[0, 0, 0]}
@@ -168,6 +264,17 @@ export default function RightCanvas({ selectedGraph }: RightCanvasProps) {
             anchorY="middle"
           >
             Z
+          </Text>
+          {/* Negative Z */}
+          <Text
+            position={[0, 0, -10.5]}
+            rotation={[0, 0, 0]}
+            fontSize={0.8}
+            color="blue"
+            anchorX="center"
+            anchorY="middle"
+          >
+            -Z
           </Text>
           
           {/* Dynamic Graph Rendering */}
