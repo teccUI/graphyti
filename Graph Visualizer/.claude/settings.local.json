@@ -2,7 +2,9 @@
   "permissions": {
     "allow": [
       "Bash(npm run dev:*)",
-      "Bash(npm run lint)"
+      "Bash(npm run lint)",
+      "Bash(mkdir:*)",
+      "Bash(npm install:*)"
     ],
     "deny": [],
     "ask": []
