@@ -25,6 +25,34 @@ function App() {
     }
   }
 
+  const handlePreviousGraph = () => {
+    if (!selectedGraph) return
+    
+    const currentIndex = graphList.findIndex(g => g.id === selectedGraph.id)
+    if (currentIndex > 0) {
+      const previousGraph = graphList[currentIndex - 1]
+      setSelectedGraph(previousGraph)
+    } else {
+      // Wrap to the last graph
+      const lastGraph = graphList[graphList.length - 1]
+      setSelectedGraph(lastGraph)
+    }
+  }
+
+  const handleNextGraph = () => {
+    if (!selectedGraph) return
+    
+    const currentIndex = graphList.findIndex(g => g.id === selectedGraph.id)
+    if (currentIndex < graphList.length - 1) {
+      const nextGraph = graphList[currentIndex + 1]
+      setSelectedGraph(nextGraph)
+    } else {
+      // Wrap to the first graph
+      const firstGraph = graphList[0]
+      setSelectedGraph(firstGraph)
+    }
+  }
+
   return (
     <Box sx={{
       width: '100vw',
@@ -64,7 +92,11 @@ function App() {
           minHeight: { xs: '500px', md: 'unset' },
           height: { xs: '70vh', md: 'auto' }
         }}>
-          <RightCanvas selectedGraph={selectedGraph} />
+          <RightCanvas 
+            selectedGraph={selectedGraph} 
+            onPreviousGraph={handlePreviousGraph}
+            onNextGraph={handleNextGraph}
+          />
         </Box>
       </Box>
     </Box>

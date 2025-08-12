@@ -1,8 +1,7 @@
-import { Box, IconButton, ButtonGroup, Tooltip, Typography } from '@mui/material'
-import { Plus, Minus, ArrowsClockwise, ArrowsOutCardinal, ArrowLineLeft } from 'phosphor-react'
-import { Canvas, useThree } from '@react-three/fiber'
-import { OrbitControls, Grid, Text } from '@react-three/drei'
-import * as THREE from 'three'
+import { Box, IconButton, ButtonGroup, Tooltip } from '@mui/material'
+import { Plus, Minus, ArrowsClockwise, ArrowsOutCardinal, ArrowLineLeft, CaretLeft, CaretRight } from 'phosphor-react'
+import { Canvas } from '@react-three/fiber'
+import { OrbitControls, Text } from '@react-three/drei'
 import { useRef, useState } from 'react'
 import GraphRenderer from '../GraphRenderer'
 
@@ -19,10 +18,12 @@ interface Graph {
 
 interface RightCanvasProps {
   selectedGraph: Graph | null
+  onPreviousGraph: () => void
+  onNextGraph: () => void
 }
 
-export default function RightCanvas({ selectedGraph }: RightCanvasProps) {
-  const controlsRef = useRef<any>(null)
+export default function RightCanvas({ selectedGraph, onPreviousGraph, onNextGraph }: RightCanvasProps) {
+  const controlsRef = useRef<typeof OrbitControls | null>(null)
   const [isRotating, setIsRotating] = useState(false)
   const [isPanMode, setIsPanMode] = useState(false)
   
@@ -294,6 +295,56 @@ export default function RightCanvas({ selectedGraph }: RightCanvasProps) {
         padding: '8px'
       }}>
         <ButtonGroup variant="outlined" size="small" sx={{ gap: '4px' }}>
+            <Tooltip 
+              title="Previous Graph"
+              placement="top"
+              componentsProps={{
+                tooltip: {
+                  sx: {
+                    backgroundColor: '#ffffff',
+                    border: '1px solid #E0E0E0',
+                    borderRadius: '8px',
+                    boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
+                    color: '#111111',
+                    fontSize: '12px',
+                    padding: '4px 10px'
+                  }
+                }
+              }}
+            >
+              <IconButton 
+                sx={{ width: '30px', height: '30px', border: '1px solid #e0e0e0', borderRadius: '8px' }}
+                onClick={onPreviousGraph}
+              >
+                <CaretLeft size={16} color="#111111" />
+              </IconButton>
+            </Tooltip>
+            
+            <Tooltip 
+              title="Next Graph"
+              placement="top"
+              componentsProps={{
+                tooltip: {
+                  sx: {
+                    backgroundColor: '#ffffff',
+                    border: '1px solid #E0E0E0',
+                    borderRadius: '8px',
+                    boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
+                    color: '#111111',
+                    fontSize: '12px',
+                    padding: '4px 10px'
+                  }
+                }
+              }}
+            >
+              <IconButton 
+                sx={{ width: '30px', height: '30px', border: '1px solid #e0e0e0', borderRadius: '8px' }}
+                onClick={onNextGraph}
+              >
+                <CaretRight size={16} color="#111111" />
+              </IconButton>
+            </Tooltip>
+            
             <Tooltip 
               title="Zoom In"
               placement="top"
