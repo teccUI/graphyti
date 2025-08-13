@@ -292,9 +292,19 @@ export default function RightCanvas({ selectedGraph, onPreviousGraph, onNextGrap
         backgroundColor: '#FFFFFF',
         borderRadius: '12px',
         boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
-        padding: '8px'
+        padding: '8px',
+        '@media (max-width: 768px)': {
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '8px'
+        }
       }}>
-        <ButtonGroup variant="outlined" size="small" sx={{ gap: '4px' }}>
+        <ButtonGroup variant="outlined" size="small" sx={{ 
+          gap: '4px',
+          '@media (max-width: 768px)': {
+            display: 'none'
+          }
+        }}>
             <Tooltip 
               title="Previous Graph"
               placement="top"
@@ -552,6 +562,137 @@ export default function RightCanvas({ selectedGraph, onPreviousGraph, onNextGrap
               </IconButton>
             </Tooltip>
           </ButtonGroup>
+          
+          {/* Mobile Layout - 2 rows */}
+          <Box sx={{
+            '@media (min-width: 769px)': {
+              display: 'none'
+            },
+            '@media (max-width: 768px)': {
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '8px'
+            }
+          }}>
+            {/* First Row - 5 buttons */}
+            <ButtonGroup variant="outlined" size="small" sx={{ gap: '4px', justifyContent: 'center' }}>
+              <Tooltip title="Previous Graph" placement="top">
+                <IconButton 
+                  sx={{ width: '30px', height: '30px', border: '1px solid #e0e0e0', borderRadius: '8px' }}
+                  onClick={onPreviousGraph}
+                >
+                  <CaretLeft size={16} color="#111111" />
+                </IconButton>
+              </Tooltip>
+              
+              <Tooltip title="Next Graph" placement="top">
+                <IconButton 
+                  sx={{ width: '30px', height: '30px', border: '1px solid #e0e0e0', borderRadius: '8px' }}
+                  onClick={onNextGraph}
+                >
+                  <CaretRight size={16} color="#111111" />
+                </IconButton>
+              </Tooltip>
+              
+              <Tooltip title="Zoom In" placement="top">
+                <IconButton 
+                  sx={{ width: '30px', height: '30px', border: '1px solid #e0e0e0', borderRadius: '8px' }}
+                  onClick={handleZoomIn}
+                >
+                  <Plus size={16} color="#111111" />
+                </IconButton>
+              </Tooltip>
+              
+              <Tooltip title="Zoom Out" placement="top">
+                <IconButton 
+                  sx={{ width: '30px', height: '30px', border: '1px solid #e0e0e0', borderRadius: '8px' }}
+                  onClick={handleZoomOut}
+                >
+                  <Minus size={16} color="#111111" />
+                </IconButton>
+              </Tooltip>
+              
+              <Tooltip title="Rotate" placement="top">
+                <IconButton 
+                  sx={{ 
+                    width: '30px', 
+                    height: '30px', 
+                    border: isRotating ? '1px solid #ffffff' : '1px solid #e0e0e0', 
+                    borderRadius: '8px',
+                    backgroundColor: isRotating ? '#111111' : 'transparent',
+                    '& svg': {
+                      color: isRotating ? '#ffffff' : '#111111'
+                    },
+                    '&:hover': {
+                      backgroundColor: isRotating ? '#ffffff' : 'rgba(0, 0, 0, 0.04)',
+                      border: isRotating ? '1px solid #e0e0e0' : '1px solid #e0e0e0',
+                      '& svg': {
+                        color: '#111111'
+                      }
+                    }
+                  }}
+                  onClick={handleRotate}
+                >
+                  <ArrowsClockwise size={16} />
+                </IconButton>
+              </Tooltip>
+            </ButtonGroup>
+            
+            {/* Second Row - 4 buttons */}
+            <ButtonGroup variant="outlined" size="small" sx={{ gap: '4px', justifyContent: 'center' }}>
+              <Tooltip title="Pan" placement="top">
+                <IconButton 
+                  sx={{ 
+                    width: '30px', 
+                    height: '30px', 
+                    border: isPanMode ? '1px solid #ffffff' : '1px solid #e0e0e0', 
+                    borderRadius: '8px',
+                    backgroundColor: isPanMode ? '#111111' : 'transparent',
+                    '& svg': {
+                      color: isPanMode ? '#ffffff' : '#111111'
+                    },
+                    '&:hover': {
+                      backgroundColor: isPanMode ? '#ffffff' : 'rgba(0, 0, 0, 0.04)',
+                      border: isPanMode ? '1px solid #e0e0e0' : '1px solid #e0e0e0',
+                      '& svg': {
+                        color: '#111111'
+                      }
+                    }
+                  }}
+                  onClick={handlePan}
+                >
+                  <ArrowsOutCardinal size={16} />
+                </IconButton>
+              </Tooltip>
+              
+              <Tooltip title="Front View" placement="top">
+                <IconButton 
+                  sx={{ width: '30px', height: '30px', border: '1px solid #e0e0e0', borderRadius: '8px' }}
+                  onClick={handleXAxisView}
+                >
+                  <ArrowLineLeft size={16} color="#111111" style={{ transform: 'rotate(-180deg)' }} />
+                </IconButton>
+              </Tooltip>
+              
+              <Tooltip title="Side View" placement="top">
+                <IconButton 
+                  sx={{ width: '30px', height: '30px', border: '1px solid #e0e0e0', borderRadius: '8px' }}
+                  onClick={handleYAxisView}
+                >
+                  <ArrowLineLeft size={16} color="#111111" style={{ transform: 'rotate(90deg)' }} />
+                </IconButton>
+              </Tooltip>
+              
+              <Tooltip title="Top View" placement="top">
+                <IconButton 
+                  sx={{ width: '30px', height: '30px', border: '1px solid #e0e0e0', borderRadius: '8px' }}
+                  onClick={handleZAxisView}
+                >
+                  <ArrowLineLeft size={16} color="#111111" style={{ transform: 'rotate(-90deg)' }} />
+                </IconButton>
+              </Tooltip>
+            </ButtonGroup>
+          </Box>
       </Box>
 
     </Box>

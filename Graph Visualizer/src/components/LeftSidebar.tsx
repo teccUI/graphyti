@@ -21,6 +21,29 @@ interface LeftSidebarProps {
 }
 
 export default function LeftSidebar({ selectedGraph, onGraphChange }: LeftSidebarProps) {
+  // Categorize graphs into 2D and 3D and sort alphabetically
+  const categorizeGraphs = () => {
+    const conceptually2DCurves = ['Viviani\'s Curve', 'Trefoil Knot'] // 3D parametric curves that are conceptually 2D-like
+    
+    const is2D = (graph: Graph) => 
+      graph.type.includes('2D Function') || 
+      graph.type.includes('2D Parametric') || 
+      graph.type.includes('2D Polar') ||
+      (graph.type === '3D Parametric Curve' && conceptually2DCurves.includes(graph.name))
+      
+    const is3D = (graph: Graph) => 
+      graph.type.includes('3D Surface') || 
+      graph.type === '2D Function/3D Surface' ||
+      (graph.type === '3D Parametric Curve' && !conceptually2DCurves.includes(graph.name))
+    
+    const graphs2D = graphList.filter(graph => is2D(graph)).sort((a, b) => a.name.localeCompare(b.name))
+    const graphs3D = graphList.filter(graph => is3D(graph)).sort((a, b) => a.name.localeCompare(b.name))
+    
+    return { graphs2D, graphs3D }
+  }
+
+  const { graphs2D, graphs3D } = categorizeGraphs()
+
   // Auto-select first formula on component mount if none selected
   React.useEffect(() => {
     if (!selectedGraph && graphList.length > 0) {
@@ -101,13 +124,27 @@ export default function LeftSidebar({ selectedGraph, onGraphChange }: LeftSideba
             return graph?.name
           }}
           MenuProps={{
+            anchorOrigin: {
+              vertical: 'bottom',
+              horizontal: 'left',
+            },
+            transformOrigin: {
+              vertical: 'top',
+              horizontal: 'left',
+            },
             PaperProps: {
               style: {
                 maxHeight: 320,
                 marginTop: '8px',
                 boxShadow: '0 4px 20px rgba(201, 201, 201, 0.7)',
+                width: '330px',
               },
               sx: {
+                '@media (max-width: 768px)': {
+                  width: '254px !important',
+                  minWidth: '254px !important',
+                  maxWidth: '254px !important'
+                },
                 '&::-webkit-scrollbar': {
                   width: '4px',
                 },
@@ -115,12 +152,12 @@ export default function LeftSidebar({ selectedGraph, onGraphChange }: LeftSideba
                   background: 'transparent',
                 },
                 '&::-webkit-scrollbar-thumb': {
-                  backgroundColor: '#e0e0e0',
+                  backgroundColor: '#ffffff',
                   borderRadius: '4px',
                   border: 'none',
                 },
                 '&::-webkit-scrollbar-thumb:hover': {
-                  backgroundColor: '#d0d0d0',
+                  backgroundColor: '#f0f0f0',
                 },
               },
             },
@@ -149,13 +186,36 @@ export default function LeftSidebar({ selectedGraph, onGraphChange }: LeftSideba
             </Box>
           )}
         >
-          {graphList.map((graph) => (
+          {graphs2D.map((graph) => (
             <MenuItem 
               key={graph.id} 
               value={graph.id}
               sx={{
-                marginLeft: '4px',
+                marginLeft: '8px',
                 borderRadius: '4px',
+                fontSize: '14px',
+                '&:hover': {
+                  backgroundColor: '#f8f8f8'
+                },
+                '&.Mui-selected': {
+                  backgroundColor: '#f6f6f6'
+                },
+                '&.Mui-selected:hover': {
+                  backgroundColor: '#f6f6f6'
+                }
+              }}
+            >
+              {graph.name}
+            </MenuItem>
+          ))}
+          {graphs3D.map((graph) => (
+            <MenuItem 
+              key={graph.id} 
+              value={graph.id}
+              sx={{
+                marginLeft: '8px',
+                borderRadius: '4px',
+                fontSize: '14px',
                 '&:hover': {
                   backgroundColor: '#f8f8f8'
                 },
