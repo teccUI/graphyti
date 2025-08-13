@@ -4,7 +4,9 @@
       "Bash(npm run dev:*)",
       "Bash(npm run lint)",
       "Bash(mkdir:*)",
-      "Bash(npm install:*)"
+      "Bash(npm install:*)",
+      "WebFetch(domain:en.wikipedia.org)",
+      "Bash(npm run build:*)"
     ],
     "deny": [],
     "ask": []

@@ -28,6 +28,16 @@ function GraphRenderer({ graph }: GraphRendererProps) {
         return createDefaultGeometry(graph)
       }
       
+      // Special handling for hyperboloid of two sheets which needs two separate surfaces
+      if (graph.name === 'Hyperboloid of Two Sheets') {
+        return createHyperboloidTwoSheetsGeometry()
+      }
+      
+      // Special handling for hyperboloid of one sheet which needs both +z and -z surfaces
+      if (graph.name === 'Hyperboloid of One Sheet') {
+        return createHyperboloidOneSheetGeometry()
+      }
+      
       // Handle Wave Function specifically as 3D Surface
       if (graph.name === 'Wave Function (Quantum Mechanics)') {
         return createSurfaceGeometry(graph, resolution)
@@ -111,7 +121,6 @@ function createSurfaceGeometry(graph: Graph, resolution: number): THREE.BufferGe
 }
 
 function create2DFunctionGeometry(graph: Graph, resolution: number): THREE.BufferGeometry {
-  const points: THREE.Vector3[] = []
   const range = 10
   const step = (2 * range) / resolution
   
@@ -300,13 +309,13 @@ function createDefaultGeometry(graph: Graph): THREE.BufferGeometry {
     case 'Hyperbolic Paraboloid':
       return createHyperbolicParaboloidGeometry()
     case 'Ellipsoid':
-      return new THREE.SphereGeometry(2, 32, 32)
+      return createEllipsoidGeometry()
     case 'Cone':
-      return new THREE.ConeGeometry(2, 4, 32)
+      return createDoubleConeGeometry()
     case 'Cylinder':
-      return new THREE.CylinderGeometry(2, 2, 6, 32) // Proper cylinder
+      return createMathematicalCylinderGeometry()
     case 'Torus (Doughnut)':
-      return new THREE.TorusGeometry(3, 1, 16, 100)
+      return new THREE.TorusGeometry(3, 1.5, 16, 100) // Better 2:1 ratio for mathematical accuracy
     default:
       return new THREE.BoxGeometry(2, 2, 2)
   }
@@ -342,16 +351,231 @@ function createHyperbolicParaboloidGeometry(): THREE.BufferGeometry {
   return geometry
 }
 
+function createEllipsoidGeometry(): THREE.BufferGeometry {
+  const geometry = new THREE.SphereGeometry(1, 32, 32)
+  const positions = geometry.attributes.position.array as Float32Array
+  
+  // Transform sphere into ellipsoid by scaling along different axes
+  const a = 3  // x-axis radius
+  const b = 2  // y-axis radius  
+  const c = 1.5 // z-axis radius
+  
+  for (let i = 0; i < positions.length; i += 3) {
+    positions[i] *= a     // Scale x
+    positions[i + 1] *= b // Scale y
+    positions[i + 2] *= c // Scale z
+  }
+  
+  geometry.attributes.position.needsUpdate = true
+  geometry.computeVertexNormals()
+  return geometry
+}
+
+function createMathematicalCylinderGeometry(): THREE.BufferGeometry {
+  // Create mathematical cylinder surface: x² + y² = r² (infinite cylinder without caps)
+  const radius = 2
+  const height = 8 // Extended height for mathematical representation
+  const radialSegments = 32
+  const heightSegments = 20
+  
+  // Create cylinder without caps using CylinderGeometry
+  const geometry = new THREE.CylinderGeometry(radius, radius, height, radialSegments, heightSegments, true) // openEnded = true
+  
+  return geometry
+}
+
+function createHyperboloidOneSheetGeometry(): THREE.BufferGeometry {
+  // Create hyperboloid of one sheet: x²/a² + y²/b² - z²/c² = 1
+  // This is a connected surface extending in both +z and -z directions
+  const a = 2, c = 2
+  const resolution = 40
+  const zRange = 4 // Range of z values
+  
+  const vertices: number[] = []
+  const indices: number[] = []
+  
+  let vertexIndex = 0
+  
+  // Create surface using parametric approach
+  for (let i = 0; i <= resolution; i++) {
+    for (let j = 0; j <= resolution; j++) {
+      // Use z as parameter from -zRange to +zRange
+      const z = -zRange + (2 * zRange * i) / resolution
+      const theta = (2 * Math.PI * j) / resolution
+      
+      // From x²/a² + y²/b² - z²/c² = 1, solve for radius r
+      // r²/a² - z²/c² = 1, so r² = a²(1 + z²/c²)
+      const rSquared = a * a * (1 + (z * z) / (c * c))
+      const r = Math.sqrt(rSquared)
+      
+      const x = r * Math.cos(theta)
+      const y = r * Math.sin(theta)
+      
+      vertices.push(x, y, z)
+      
+      // Create indices for triangulation
+      if (i < resolution && j < resolution) {
+        const current = vertexIndex
+        const next = vertexIndex + 1
+        const nextRow = vertexIndex + (resolution + 1)
+        const nextRowNext = nextRow + 1
+        
+        // Two triangles per quad
+        indices.push(current, next, nextRow)
+        indices.push(next, nextRowNext, nextRow)
+      }
+      
+      vertexIndex++
+    }
+  }
+  
+  const geometry = new THREE.BufferGeometry()
+  geometry.setFromPoints(vertices.map((_, i, arr) => {
+    if (i % 3 === 0) {
+      return new THREE.Vector3(arr[i], arr[i + 1], arr[i + 2])
+    }
+  }).filter(Boolean) as THREE.Vector3[])
+  
+  geometry.setIndex(indices)
+  geometry.computeVertexNormals()
+  
+  return geometry
+}
+
+function createDoubleConeGeometry(): THREE.BufferGeometry {
+  // Create mathematical double cone surface: x²/a² + y²/b² = z²/c²
+  // This creates two cone surfaces meeting at the origin
+  const a = 2, c = 2
+  const resolution = 30
+  const zRange = 4 // Extends from -zRange to +zRange
+  
+  const vertices: number[] = []
+  const indices: number[] = []
+  
+  let vertexIndex = 0
+  
+  // Create both upper and lower cone surfaces
+  for (let i = 0; i <= resolution; i++) {
+    for (let j = 0; j <= resolution; j++) {
+      // Parameter z from -zRange to +zRange
+      const z = -zRange + (2 * zRange * i) / resolution
+      const theta = (2 * Math.PI * j) / resolution
+      
+      // Skip the apex point at z=0 to avoid singularity
+      if (Math.abs(z) > 0.1) {
+        // From x²/a² + y²/b² = z²/c², solve for radius r where x = r*cos(θ), y = r*sin(θ)
+        // r²/a² = z²/c² (assuming a=b), so r = a*|z|/c
+        const r = a * Math.abs(z) / c
+        const x = r * Math.cos(theta)
+        const y = r * Math.sin(theta)
+        
+        vertices.push(x, y, z)
+        
+        // Create indices for triangulation
+        if (i < resolution && j < resolution) {
+          const current = vertexIndex
+          const next = vertexIndex + 1
+          const nextRow = vertexIndex + (resolution + 1)
+          const nextRowNext = nextRow + 1
+          
+          // Two triangles per quad
+          indices.push(current, next, nextRow)
+          indices.push(next, nextRowNext, nextRow)
+        }
+        
+        vertexIndex++
+      }
+    }
+  }
+  
+  const geometry = new THREE.BufferGeometry()
+  geometry.setFromPoints(vertices.map((_, i, arr) => {
+    if (i % 3 === 0) {
+      return new THREE.Vector3(arr[i], arr[i + 1], arr[i + 2])
+    }
+  }).filter(Boolean) as THREE.Vector3[])
+  
+  geometry.setIndex(indices)
+  geometry.computeVertexNormals()
+  
+  return geometry
+}
+
+function createHyperboloidTwoSheetsGeometry(): THREE.BufferGeometry {
+  // Create hyperboloid of two sheets: -x²/a² - y²/b² + z²/c² = 1
+  // This creates two separate bowl-shaped surfaces
+  const a = 2, c = 2
+  const resolution = 30
+  const zMin = 1.2 // Start slightly above z = c to avoid singularity
+  const zMax = 4
+  
+  const vertices: number[] = []
+  const indices: number[] = []
+  
+  let vertexIndex = 0
+  
+  // Create both sheets (positive and negative z)
+  for (const sign of [1, -1]) {
+    for (let i = 0; i <= resolution; i++) {
+      for (let j = 0; j <= resolution; j++) {
+        // Parametric approach: use z as parameter, solve for x,y
+        const z = sign * (zMin + (zMax - zMin) * (i / resolution))
+        const theta = (2 * Math.PI * j) / resolution
+        
+        // From -x²/a² - y²/b² + z²/c² = 1, solve for radius r where x = r*cos(θ), y = r*sin(θ)
+        // -r²/a² + z²/c² = 1 (assuming a=b for simplicity)
+        // r² = a²(z²/c² - 1)
+        const rSquared = a * a * (z * z / (c * c) - 1)
+        
+        if (rSquared >= 0) {
+          const r = Math.sqrt(rSquared)
+          const x = r * Math.cos(theta)
+          const y = r * Math.sin(theta)
+          
+          vertices.push(x, y, z)
+          
+          // Create indices for triangulation (except for the last row/column)
+          if (i < resolution && j < resolution) {
+            const current = vertexIndex
+            const next = vertexIndex + 1
+            const nextRow = vertexIndex + (resolution + 1)
+            const nextRowNext = nextRow + 1
+            
+            // Two triangles per quad
+            indices.push(current, next, nextRow)
+            indices.push(next, nextRowNext, nextRow)
+          }
+          
+          vertexIndex++
+        }
+      }
+    }
+  }
+  
+  const geometry = new THREE.BufferGeometry()
+  geometry.setFromPoints(vertices.map((_, i, arr) => {
+    if (i % 3 === 0) {
+      return new THREE.Vector3(arr[i], arr[i + 1], arr[i + 2])
+    }
+  }).filter(Boolean) as THREE.Vector3[])
+  
+  // Set indices for proper triangulation
+  geometry.setIndex(indices)
+  geometry.computeVertexNormals()
+  
+  return geometry
+}
+
 function calculateSurfaceZ(graph: Graph, x: number, y: number): number {
   const originalEquation = graph.equation_latex
   
   // Handle parametric surfaces (u,v parameterization)
   if (graph.name === 'Helicoid') {
-    // x = u*cos(v), y = u*sin(v), z = c*v
+    // Right-handed helicoid: x = u*cos(v), y = u*sin(v), z = c*v
     // Given (x,y), find (u,v) and return z
-    const c = 0.5
-    const u = Math.sqrt(x*x + y*y)
+    const c = 1.0  // Increased pitch for better visualization
     const v = Math.atan2(y, x)
+    // Ensure right-handed orientation with positive c
     return c * v
   }
   
@@ -424,10 +648,11 @@ function calculateSurfaceZ(graph: Graph, x: number, y: number): number {
   }
   
   if (graph.name === 'Gaussian (Bell Curve) Surface') {
-    // z = e^(-(x^2+y^2)/σ^2) with proper scaling for visualization
-    const sigma = 3 // Standard deviation - controls width of bell curve
-    const amplitude = 3 // Height scaling for better visibility
-    return amplitude * Math.exp(-((x*x + y*y) / (2 * sigma * sigma)))
+    // z = A * e^(-(x^2+y^2)/σ^2) - standard 2D Gaussian centered at origin
+    const sigma = 2.5 // Standard deviation - controls width of bell curve
+    const amplitude = 4 // Height scaling for better visibility
+    // Create proper bell curve that peaks upward at center (0,0)
+    return amplitude * Math.exp(-(x*x + y*y) / (2 * sigma * sigma))
   }
   
   if (graph.name === 'Monkey Saddle') {
@@ -500,7 +725,24 @@ function calculate2DFunction(graph: Graph, x: number): number {
   }
   
   if (graph.name === 'Tangent Function') {
-    return Math.tan(x)
+    // Handle tangent function with proper asymptotes at π/2, 3π/2, etc.
+    // Check if we're near an asymptote (where cos(x) ≈ 0)
+    const tolerance = 0.01
+    const cosValue = Math.cos(x)
+    
+    if (Math.abs(cosValue) < tolerance) {
+      // Near asymptote - return NaN to create discontinuity
+      return NaN
+    }
+    
+    const tanValue = Math.tan(x)
+    
+    // Clamp extreme values near asymptotes for better visualization
+    if (!isFinite(tanValue) || Math.abs(tanValue) > 100) {
+      return NaN
+    }
+    
+    return tanValue
   }
   
   if (graph.name === 'Logarithmic Function') {
@@ -537,11 +779,11 @@ function calculate2DFunction(graph: Graph, x: number): number {
   }
   
   if (graph.name === "Force vs. Extension (Hooke's Law)") {
-    // For Force vs Extension: F_applied = kx (positive slope)
-    // This is the force needed to stretch the spring by extension x
-    // Note: Hooke's law F = -kx is the restoring force, but this graph shows applied force
+    // Hooke's Law: F = kx (showing applied force vs extension)
+    // The restoring force is F_restoring = -kx, but for extension graphs we typically show F_applied = kx
+    // This represents the external force needed to create extension x
     const k = 2 // Spring constant
-    return k * Math.abs(x) // Applied force proportional to extension (always positive for stretching)
+    return k * x // Linear relationship: force proportional to extension
   }
   
   if (graph.name === 'Pressure vs. Volume (Boyle\'s Law)') {
@@ -561,11 +803,13 @@ function calculate2DFunction(graph: Graph, x: number): number {
   
   if (graph.name === "Pressure vs. Temperature (Gay-Lussac's Law)") {
     // Gay-Lussac's Law: P ∝ T (absolute temperature in Kelvin)
-    // If x represents temperature in Celsius, convert to Kelvin
-    const temperatureKelvin = x + 273.15 // Convert °C to K
-    const k = 0.1 // Proportionality constant (for reasonable pressure scale)
+    // For better visualization, treat x-axis as temperature in Celsius from -300 to +200°C
+    const temperatureCelsius = x * 50 // Scale x range to reasonable temperature range  
+    const temperatureKelvin = temperatureCelsius + 273.15 // Convert °C to K
+    const k = 0.02 // Proportionality constant (for reasonable pressure scale)
     
-    // Pressure should be zero at absolute zero, proportional to T in Kelvin
+    // Pressure should be zero at absolute zero (-273.15°C), linear with T in Kelvin
+    // This creates a straight line that intercepts y-axis at pressure corresponding to 0°C
     return temperatureKelvin > 0 ? k * temperatureKelvin : 0
   }
   
@@ -785,7 +1029,7 @@ function calculatePolar(graph: Graph, theta: number): number {
   }
   
   if (graph.name === 'Rose Curve') {
-    const a = 3, k = 4
+    const a = 3, k = 5  // k=5 creates 5 petals (clearer for students than k=4 which creates 8 petals)
     return a * Math.cos(k * theta)
   }
   
@@ -850,7 +1094,7 @@ function convertLatexToMathjs(latex: string): string {
   // Handle implicit multiplication more robustly
   expr = expr
     // Handle variable-variable multiplication: xy -> x*y, but avoid overriding function names
-    .replace(/([a-z])([a-z])/g, (match, p1, p2) => {
+    .replace(/([a-z])([a-z])/g, (_, p1, p2) => {
       // Don't split common function names or constants
       const combined = p1 + p2
       if (['sin', 'cos', 'tan', 'log', 'exp', 'pi'].includes(combined)) {

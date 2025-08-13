@@ -137,7 +137,7 @@ export default function LeftSidebar({ selectedGraph, onGraphChange }: LeftSideba
           TransitionProps={{
             timeout: 65
           }}
-          IconComponent={(props) => (
+          IconComponent={() => (
             <Box sx={{ 
               position: 'absolute', 
               right: '12px', 
@@ -154,8 +154,16 @@ export default function LeftSidebar({ selectedGraph, onGraphChange }: LeftSideba
               key={graph.id} 
               value={graph.id}
               sx={{
+                marginLeft: '4px',
+                borderRadius: '4px',
                 '&:hover': {
-                  backgroundColor: '#f5f5f5'
+                  backgroundColor: '#f8f8f8'
+                },
+                '&.Mui-selected': {
+                  backgroundColor: '#f6f6f6'
+                },
+                '&.Mui-selected:hover': {
+                  backgroundColor: '#f6f6f6'
                 }
               }}
             >
