@@ -115,17 +115,54 @@ function create2DFunctionGeometry(graph: Graph, resolution: number): THREE.Buffe
   const range = 10
   const step = (2 * range) / resolution
   
+  let currentSegment: THREE.Vector3[] = []
+  const segments: THREE.Vector3[][] = []
+  
   for (let i = 0; i <= resolution; i++) {
     const x = -range + i * step
     try {
       const y = calculate2DFunction(graph, x)
-      points.push(new THREE.Vector3(x, y, 0))
+      
+      if (isNaN(y) || !isFinite(y)) {
+        // Discontinuity found - end current segment and start new one
+        if (currentSegment.length > 1) {
+          segments.push([...currentSegment])
+        }
+        currentSegment = []
+      } else {
+        // Valid point - add to current segment
+        currentSegment.push(new THREE.Vector3(x, y, 0))
+      }
     } catch {
-      continue
+      // Error encountered - end current segment
+      if (currentSegment.length > 1) {
+        segments.push([...currentSegment])
+      }
+      currentSegment = []
     }
   }
   
-  return new THREE.BufferGeometry().setFromPoints(points)
+  // Add final segment if it exists
+  if (currentSegment.length > 1) {
+    segments.push(currentSegment)
+  }
+  
+  // Combine all segments into a single geometry
+  // For discontinuous functions, we'll connect the longest segment
+  // In the future, this could be enhanced to render multiple line segments
+  if (segments.length === 0) {
+    return new THREE.BufferGeometry().setFromPoints([])
+  }
+  
+  // Find the longest continuous segment to display
+  let longestSegment = segments[0]
+  for (const segment of segments) {
+    if (segment.length > longestSegment.length) {
+      longestSegment = segment
+    }
+  }
+  
+  return new THREE.BufferGeometry().setFromPoints(longestSegment)
 }
 
 function createParametricGeometry(graph: Graph, resolution: number): THREE.BufferGeometry {
@@ -133,29 +170,31 @@ function createParametricGeometry(graph: Graph, resolution: number): THREE.Buffe
     graph.name === 'Astroid' || graph.name === 'Cycloid' || graph.name === 'Lissajous Curve'
     
   if (shouldRenderAsFilled) {
-    // Create filled surface for these shapes
-    const geometry = new THREE.PlaneGeometry(1, 1, resolution, resolution)
-    const positions = geometry.attributes.position.array as Float32Array
-    
+    // Create filled surface using THREE.ShapeGeometry
+    const points: THREE.Vector2[] = []
     const tMax = 2 * Math.PI
     const step = tMax / resolution
     
-    for (let i = 0; i < positions.length; i += 3) {
-      const t = (i / 3) * step / (resolution + 1) * tMax
+    // Generate outline points that define the shape boundary
+    for (let i = 0; i <= resolution; i++) {
+      const t = i * step
       try {
         const { x, y } = calculateParametric2D(graph, t)
-        positions[i] = x
-        positions[i + 1] = y
-        positions[i + 2] = 0
+        points.push(new THREE.Vector2(x, y))
       } catch {
-        positions[i] = 0
-        positions[i + 1] = 0
-        positions[i + 2] = 0
+        // Skip invalid points
+        continue
       }
     }
     
-    geometry.attributes.position.needsUpdate = true
-    return geometry
+    if (points.length < 3) {
+      // Fallback to line if we don't have enough points for a shape
+      return new THREE.BufferGeometry().setFromPoints(points.map(p => new THREE.Vector3(p.x, p.y, 0)))
+    }
+    
+    // Create a Shape from the points and generate ShapeGeometry
+    const shape = new THREE.Shape(points)
+    return new THREE.ShapeGeometry(shape)
   } else {
     // Create line geometry for curves
     const points: THREE.Vector3[] = []
@@ -199,31 +238,35 @@ function createPolarGeometry(graph: Graph, resolution: number): THREE.BufferGeom
     graph.name === 'Lemniscate of Bernoulli'
     
   if (shouldRenderAsFilled) {
-    // Create filled surface for polar shapes
-    const geometry = new THREE.PlaneGeometry(1, 1, resolution, resolution)
-    const positions = geometry.attributes.position.array as Float32Array
-    
+    // Create filled surface using THREE.ShapeGeometry
+    const points: THREE.Vector2[] = []
     const thetaMax = 2 * Math.PI
     const step = thetaMax / resolution
     
-    for (let i = 0; i < positions.length; i += 3) {
-      const theta = (i / 3) * step / (resolution + 1) * thetaMax
+    // Generate outline points that define the polar shape boundary
+    for (let i = 0; i <= resolution; i++) {
+      const theta = i * step
       try {
         const r = calculatePolar(graph, theta)
-        const x = r * Math.cos(theta)
-        const y = r * Math.sin(theta)
-        positions[i] = x
-        positions[i + 1] = y
-        positions[i + 2] = 0
+        if (r > 0) { // Only add points with positive radius
+          const x = r * Math.cos(theta)
+          const y = r * Math.sin(theta)
+          points.push(new THREE.Vector2(x, y))
+        }
       } catch {
-        positions[i] = 0
-        positions[i + 1] = 0
-        positions[i + 2] = 0
+        // Skip invalid points
+        continue
       }
     }
     
-    geometry.attributes.position.needsUpdate = true
-    return geometry
+    if (points.length < 3) {
+      // Fallback to line if we don't have enough points for a shape
+      return new THREE.BufferGeometry().setFromPoints(points.map(p => new THREE.Vector3(p.x, p.y, 0)))
+    }
+    
+    // Create a Shape from the points and generate ShapeGeometry
+    const shape = new THREE.Shape(points)
+    return new THREE.ShapeGeometry(shape)
   } else {
     // Create line geometry for curves
     const points: THREE.Vector3[] = []
@@ -234,9 +277,11 @@ function createPolarGeometry(graph: Graph, resolution: number): THREE.BufferGeom
       const theta = i * step
       try {
         const r = calculatePolar(graph, theta)
-        const x = r * Math.cos(theta)
-        const y = r * Math.sin(theta)
-        points.push(new THREE.Vector3(x, y, 0))
+        if (r > 0) { // Only add points with positive radius
+          const x = r * Math.cos(theta)
+          const y = r * Math.sin(theta)
+          points.push(new THREE.Vector3(x, y, 0))
+        }
       } catch {
         continue
       }
@@ -347,11 +392,15 @@ function calculateSurfaceZ(graph: Graph, x: number, y: number): number {
   }
   
   if (graph.name === 'Cylinder') {
-    // x^2 + y^2 = r^2 -> create cylindrical surface
+    // For a cylinder x^2 + y^2 = r^2, z can be any value
+    // Create a proper cylindrical surface by using the radius constraint
     const r = 2
     const dist = Math.sqrt(x*x + y*y)
-    // Create a cylindrical surface that varies smoothly
-    return dist <= r ? y * 0.5 : 0 // Linear variation along y-axis
+    if (dist <= r) {
+      return 0 // Flat cylinder surface at z=0 within radius
+    } else {
+      return NaN // Outside cylinder radius - will be handled by error handling
+    }
   }
   
   if (graph.name === 'Torus (Doughnut)') {
@@ -415,11 +464,23 @@ function calculateSurfaceZ(graph: Graph, x: number, y: number): number {
     const scope = { x, y, a: 2, b: 2, c: 2, r: 2, R: 3 }
     const result = evaluate(expr, scope)
     
+    // Handle invalid results
+    if (isNaN(result) || !isFinite(result)) {
+      console.warn(`Invalid result for surface ${graph.name} at (${x.toFixed(2)}, ${y.toFixed(2)}): ${result}`)
+      return 0
+    }
+    
     // Clamp extreme values to keep surfaces visible
-    if (isNaN(result) || !isFinite(result)) return 0
-    return Math.max(-10, Math.min(10, result))
+    const clampedResult = Math.max(-10, Math.min(10, result))
+    if (clampedResult !== result) {
+      console.info(`Clamped extreme value for ${graph.name}: ${result} -> ${clampedResult}`)
+    }
+    
+    return clampedResult
   } catch (error) {
-    console.warn(`Error calculating surface for ${graph.name}:`, error)
+    console.error(`Error calculating surface for ${graph.name} at (${x.toFixed(2)}, ${y.toFixed(2)}):`, error)
+    console.info(`Original equation: ${originalEquation}`)
+    console.info(`Converted expression: ${convertLatexToMathjs(originalEquation)}`)
     return 0
   }
 }
@@ -455,24 +516,24 @@ function calculate2DFunction(graph: Graph, x: number): number {
   if (graph.name === 'Position vs. Time (Kinematics)') {
     // Show motion with initial velocity and acceleration: x = x₀ + v₀t + ½at²
     // Let x represent time t, return position x(t)
-    const x0 = 1 // Initial position
-    const v0 = 2 // Initial velocity  
-    const a = 0.3 // Acceleration
+    const x0 = 1 // Initial position (m)
+    const v0 = 2 // Initial velocity (m/s)
+    const a = 0.3 // Acceleration (m/s²)
     return x0 + v0 * x + 0.5 * a * x * x // Classic kinematic equation
   }
   
   if (graph.name === 'Velocity vs. Time (Kinematics)') {
-    // Linear acceleration: v = v₀ + at
-    return x // Linear relationship
+    // Velocity as function of time: v = v₀ + at
+    const v0 = 2 // Initial velocity (m/s)
+    const a = 0.3 // Acceleration (m/s²) - consistent with position equation
+    return v0 + a * x // Derivative of position function
   }
   
   if (graph.name === 'Acceleration vs. Time (Kinematics)') {
-    // Show realistic acceleration profile: acceleration then deceleration
-    // Like a car accelerating then braking
-    if (x < 0) return 0 // No acceleration before t=0
-    if (x < 3) return 2 // Constant acceleration phase
-    if (x < 5) return 2 - 2 * (x - 3) // Linear deceleration 
-    return -2 // Constant braking/negative acceleration
+    // Acceleration as function of time - derivative of velocity
+    // For constant acceleration, this should be horizontal line
+    const a = 0.3 // Constant acceleration (m/s²) - consistent with velocity equation
+    return a // Constant acceleration
   }
   
   if (graph.name === "Force vs. Extension (Hooke's Law)") {
@@ -565,15 +626,24 @@ function calculate2DFunction(graph: Graph, x: number): number {
     
     const result = evaluate(expr, scope)
     
-    // Clamp extreme values to keep things visible
-    if (isNaN(result) || !isFinite(result)) return 0
-    if (result > 100) return 100
-    if (result < -100) return -100
+    // Handle invalid results
+    if (isNaN(result) || !isFinite(result)) {
+      console.warn(`Invalid result for 2D function ${graph.name} at x=${x.toFixed(2)}: ${result}`)
+      return NaN // Return NaN to break line segments at discontinuities
+    }
     
-    return result
+    // Clamp extreme values to keep things visible
+    const clampedResult = Math.max(-100, Math.min(100, result))
+    if (clampedResult !== result) {
+      console.info(`Clamped extreme value for ${graph.name}: ${result} -> ${clampedResult}`)
+    }
+    
+    return clampedResult
   } catch (error) {
-    console.warn(`Error calculating 2D function for ${graph.name}:`, error)
-    return 0
+    console.error(`Error calculating 2D function for ${graph.name} at x=${x.toFixed(2)}:`, error)
+    console.info(`Original equation: ${graph.equation_latex}`)
+    console.info(`Converted expression: ${convertLatexToMathjs(graph.equation_latex)}`)
+    return NaN // Return NaN to break line segments at discontinuities
   }
 }
 
@@ -597,18 +667,17 @@ function calculateParametric2D(graph: Graph, t: number): { x: number, y: number 
   }
   
   if (graph.name === 'Cycloid') {
-    // x = r(t - sin(t)), y = r(1 - cos(t))
-    // Visible canvas is roughly -10 to +10, so arch width should be ~8 units max
-    const r = 0.8 // Small radius: arch width = 2πr ≈ 5 units
+    // Cycloid: x = r(t - sin(t)), y = r(1 - cos(t))
+    const r = 1.5 // Wheel radius
     
     const x = r * (t - Math.sin(t))
     const y = r * (1 - Math.cos(t))
     
-    // Center the arch: width spans from 0 to 2πr ≈ 5 units
+    // Center the cycloid horizontally for better visualization
     const archWidth = 2 * Math.PI * r
     return { 
-      x: x - archWidth/2, // Center: spans roughly -2.5 to +2.5
-      y: y - r // Cusps at y=-0.8, peak at y=+0.8
+      x: x - archWidth/2, // Center horizontally
+      y: y - r // Position so cusps are at y=0
     }
   }
   
@@ -643,10 +712,18 @@ function calculateParametric2D(graph: Graph, t: number): { x: number, y: number 
       const x = evaluate(xExpr, scope)
       const y = evaluate(yExpr, scope)
       
+      // Validate results
+      if (isNaN(x) || isNaN(y) || !isFinite(x) || !isFinite(y)) {
+        console.warn(`Invalid parametric result for ${graph.name} at t=${t.toFixed(2)}: (${x}, ${y})`)
+        return { x: NaN, y: NaN }
+      }
+      
       return { x, y }
     }
   } catch (error) {
-    console.warn(`Error parsing parametric equation for ${graph.name}:`, error)
+    console.error(`Error parsing parametric equation for ${graph.name} at t=${t.toFixed(2)}:`, error)
+    console.info(`Original equation: ${graph.equation_latex}`)
+    return { x: NaN, y: NaN }
   }
   
   return { x: t, y: Math.sin(t) }
@@ -739,19 +816,24 @@ function convertLatexToMathjs(latex: string): string {
   
   // Convert LaTeX to mathjs syntax
   expr = expr
+    // Handle fractions
     .replace(/\\frac\{([^}]+)\}\{([^}]+)\}/g, '($1)/($2)')
-    .replace(/\\sqrt\{([^}]+)\}\{([^}]+)\}/g, 'sqrt($1)')
+    // Handle square roots
     .replace(/\\sqrt\{([^}]+)\}/g, 'sqrt($1)')
     // Handle trigonometric functions with powers: \cos^3(t) -> cos(t)^3
     .replace(/\\sin\^(\d+)\(([^)]+)\)/g, 'sin($2)^$1')
     .replace(/\\cos\^(\d+)\(([^)]+)\)/g, 'cos($2)^$1')
     .replace(/\\tan\^(\d+)\(([^)]+)\)/g, 'tan($2)^$1')
+    // Handle powers like x^{-2} -> x^(-2)
+    .replace(/\^{([^}]+)}/g, '^($1)')
+    // Handle trigonometric and other functions
     .replace(/\\sin/g, 'sin')
     .replace(/\\cos/g, 'cos')
     .replace(/\\tan/g, 'tan')
     .replace(/\\ln/g, 'log')
     .replace(/\\log/g, 'log')
     .replace(/\\exp/g, 'exp')
+    // Handle Greek letters and constants
     .replace(/\\pi/g, 'pi')
     .replace(/\\theta/g, 'theta')
     .replace(/\\delta/g, 'delta')
@@ -759,18 +841,34 @@ function convertLatexToMathjs(latex: string): string {
     .replace(/\\omega/g, 'omega')
     .replace(/\\gamma/g, 'gamma')
     .replace(/\\e/g, 'e')
-    .replace(/\^/g, '^')
-    .replace(/\{([^}]+)\}/g, '($1)')
+    // Handle mathematical symbols
     .replace(/\\propto/g, '*') // Handle proportionality
     .replace(/\\approx/g, '=') // Handle approximation as equality
-    // Handle specific implicit multiplication patterns
-    .replace(/([xy])([xy])/g, '$1*$2') // Handle xy, xx, yy -> x*y, x*x, y*y  
-    .replace(/([abcrkABCR])([xyt])/g, '$1*$2') // Handle ax, by, etc. -> a*x, b*y
-    .replace(/([xyt])([abcrkABCR])/g, '$1*$2') // Handle xa, yb, etc. -> x*a, y*b
-    .replace(/(\))([a-z])/gi, '$1*$2') // Handle )x -> )*x
-    .replace(/([a-z])(\()/gi, '$1*$2') // Handle x( -> x*(
-    .replace(/([0-9])([a-z])/gi, '$1*$2') // Handle 2x -> 2*x
-  
+    // Convert remaining braces to parentheses
+    .replace(/\{([^}]+)\}/g, '($1)')
+    
+  // Handle implicit multiplication more robustly
+  expr = expr
+    // Handle variable-variable multiplication: xy -> x*y, but avoid overriding function names
+    .replace(/([a-z])([a-z])/g, (match, p1, p2) => {
+      // Don't split common function names or constants
+      const combined = p1 + p2
+      if (['sin', 'cos', 'tan', 'log', 'exp', 'pi'].includes(combined)) {
+        return combined
+      }
+      return `${p1}*${p2}`
+    })
+    // Handle coefficient-variable: 2x -> 2*x, 3y -> 3*y
+    .replace(/(\d+)([a-z])/gi, '$1*$2')
+    // Handle variable-coefficient: x2 -> x*2 (less common but possible)
+    .replace(/([a-z])(\d+)/gi, '$1*$2')
+    // Handle closing parenthesis followed by variable/opening parenthesis
+    .replace(/(\))([a-z(])/gi, '$1*$2')
+    // Handle variable/constant followed by opening parenthesis
+    .replace(/([a-z\d])(\()/gi, '$1*$2')
+    // Handle square terms more explicitly: x^2y -> x^2*y
+    .replace(/(\^(?:\d+|\([^)]+\)))([a-z])/gi, '$1*$2')
+    
   return expr
 }
 
