@@ -3,6 +3,7 @@ import { Plus, Minus, ArrowsClockwise, ArrowsOutCardinal, ArrowLineLeft, CaretLe
 import { Canvas } from '@react-three/fiber'
 import { OrbitControls, Text } from '@react-three/drei'
 import { useRef, useState } from 'react'
+import { OrbitControls as OrbitControlsImpl } from 'three-stdlib'
 import GraphRenderer from '../GraphRenderer'
 
 interface Graph {
@@ -20,10 +21,11 @@ interface RightCanvasProps {
   selectedGraph: Graph | null
   onPreviousGraph: () => void
   onNextGraph: () => void
+  controlValues: Record<string, number>
 }
 
-export default function RightCanvas({ selectedGraph, onPreviousGraph, onNextGraph }: RightCanvasProps) {
-  const controlsRef = useRef<typeof OrbitControls | null>(null)
+export default function RightCanvas({ selectedGraph, onPreviousGraph, onNextGraph, controlValues }: RightCanvasProps) {
+  const controlsRef = useRef<OrbitControlsImpl>(null)
   const [isRotating, setIsRotating] = useState(false)
   const [isPanMode, setIsPanMode] = useState(false)
   
@@ -149,9 +151,7 @@ export default function RightCanvas({ selectedGraph, onPreviousGraph, onNextGrap
                     <bufferGeometry>
                       <bufferAttribute 
                         attach="attributes-position"
-                        count={2}
-                        array={new Float32Array([-10, pos, 0, 10, pos, 0])}
-                        itemSize={3}
+                        args={[new Float32Array([-10, pos, 0, 10, pos, 0]), 3]}
                       />
                     </bufferGeometry>
                     <lineBasicMaterial color="#e0e0e0" transparent opacity={0.3} />
@@ -161,9 +161,7 @@ export default function RightCanvas({ selectedGraph, onPreviousGraph, onNextGrap
                     <bufferGeometry>
                       <bufferAttribute 
                         attach="attributes-position"
-                        count={2}
-                        array={new Float32Array([pos, -10, 0, pos, 10, 0])}
-                        itemSize={3}
+                        args={[new Float32Array([pos, -10, 0, pos, 10, 0]), 3]}
                       />
                     </bufferGeometry>
                     <lineBasicMaterial color="#e0e0e0" transparent opacity={0.3} />
@@ -184,9 +182,7 @@ export default function RightCanvas({ selectedGraph, onPreviousGraph, onNextGrap
                     <bufferGeometry>
                       <bufferAttribute 
                         attach="attributes-position"
-                        count={2}
-                        array={new Float32Array([-10, pos, 0, 10, pos, 0])}
-                        itemSize={3}
+                        args={[new Float32Array([-10, pos, 0, 10, pos, 0]), 3]}
                       />
                     </bufferGeometry>
                     <lineBasicMaterial color="#e0e0e0" transparent opacity={0.3} />
@@ -196,9 +192,7 @@ export default function RightCanvas({ selectedGraph, onPreviousGraph, onNextGrap
                     <bufferGeometry>
                       <bufferAttribute 
                         attach="attributes-position"
-                        count={2}
-                        array={new Float32Array([pos, -10, 0, pos, 10, 0])}
-                        itemSize={3}
+                        args={[new Float32Array([pos, -10, 0, pos, 10, 0]), 3]}
                       />
                     </bufferGeometry>
                     <lineBasicMaterial color="#e0e0e0" transparent opacity={0.3} />
@@ -279,7 +273,7 @@ export default function RightCanvas({ selectedGraph, onPreviousGraph, onNextGrap
           </Text>
           
           {/* Dynamic Graph Rendering */}
-          {selectedGraph && <GraphRenderer graph={selectedGraph} />}
+          {selectedGraph && <GraphRenderer graph={selectedGraph} controlValues={controlValues} />}
         </Canvas>
       </Box>
 

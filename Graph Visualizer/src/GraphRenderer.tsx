@@ -15,11 +15,12 @@ interface Graph {
 
 interface GraphRendererProps {
   graph: Graph
+  controlValues: Record<string, number>
 }
 
-function GraphRenderer({ graph }: GraphRendererProps) {
+function GraphRenderer({ graph, controlValues }: GraphRendererProps) {
   const geometry = useMemo(() => {
-    const resolution = 50
+    const resolution = controlValues.resolution || 50
     
     try {
       // Some shapes are better represented with built-in Three.js geometries
@@ -40,14 +41,14 @@ function GraphRenderer({ graph }: GraphRendererProps) {
       
       // Handle Wave Function specifically as 3D Surface
       if (graph.name === 'Wave Function (Quantum Mechanics)') {
-        return createSurfaceGeometry(graph, resolution)
+        return createSurfaceGeometry(graph, resolution, controlValues)
       }
       
       switch (graph.type) {
         case '3D Surface':
-          return createSurfaceGeometry(graph, resolution)
+          return createSurfaceGeometry(graph, resolution, controlValues)
         case '2D Function':
-          return create2DFunctionGeometry(graph, resolution)
+          return create2DFunctionGeometry(graph, resolution, controlValues)
         case '2D Parametric':
           return createParametricGeometry(graph, resolution)
         case '3D Parametric Curve':
@@ -55,13 +56,13 @@ function GraphRenderer({ graph }: GraphRendererProps) {
         case '2D Polar':
           return createPolarGeometry(graph, resolution)
         default:
-          return createDefaultGeometry(graph)
+          return createDefaultGeometry(graph, controlValues)
       }
     } catch (error) {
       console.warn(`Error rendering graph ${graph.name}:`, error)
-      return createDefaultGeometry(graph)
+      return createDefaultGeometry(graph, controlValues)
     }
-  }, [graph])
+  }, [graph, controlValues])
 
   const material = useMemo(() => {
     if (graph.type.includes('Curve') || graph.type === '2D Function') {
@@ -84,7 +85,7 @@ function GraphRenderer({ graph }: GraphRendererProps) {
 
   if ((graph.type.includes('Curve') || graph.type === '2D Function' || graph.type === '2D Parametric' || graph.type === '2D Polar') && !shouldRenderAsFilled) {
     return (
-      <line geometry={geometry} material={material} />
+      <primitive object={new THREE.Line(geometry, material)} />
     )
   }
 
@@ -93,7 +94,7 @@ function GraphRenderer({ graph }: GraphRendererProps) {
   )
 }
 
-function createSurfaceGeometry(graph: Graph, resolution: number): THREE.BufferGeometry {
+function createSurfaceGeometry(graph: Graph, resolution: number, controlValues: Record<string, number>): THREE.BufferGeometry {
   const geometry = new THREE.PlaneGeometry(10, 10, resolution, resolution)
   const positions = geometry.attributes.position.array as Float32Array
   
@@ -105,7 +106,7 @@ function createSurfaceGeometry(graph: Graph, resolution: number): THREE.BufferGe
     
     let z = 0
     try {
-      z = calculateSurfaceZ(graph, x, y)
+      z = calculateSurfaceZ(graph, x, y, controlValues)
     } catch {
       z = 0
     }
@@ -120,7 +121,7 @@ function createSurfaceGeometry(graph: Graph, resolution: number): THREE.BufferGe
   return geometry
 }
 
-function create2DFunctionGeometry(graph: Graph, resolution: number): THREE.BufferGeometry {
+function create2DFunctionGeometry(graph: Graph, resolution: number, controlValues: Record<string, number>): THREE.BufferGeometry {
   const range = 10
   const step = (2 * range) / resolution
   
@@ -130,7 +131,7 @@ function create2DFunctionGeometry(graph: Graph, resolution: number): THREE.Buffe
   for (let i = 0; i <= resolution; i++) {
     const x = -range + i * step
     try {
-      const y = calculate2DFunction(graph, x)
+      const y = calculate2DFunction(graph, x, controlValues)
       
       if (isNaN(y) || !isFinite(y)) {
         // Discontinuity found - end current segment and start new one
@@ -300,35 +301,44 @@ function createPolarGeometry(graph: Graph, resolution: number): THREE.BufferGeom
   }
 }
 
-function createDefaultGeometry(graph: Graph): THREE.BufferGeometry {
+function createDefaultGeometry(graph: Graph, controlValues: Record<string, number> = {}): THREE.BufferGeometry {
   switch (graph.name) {
-    case 'Sphere':
-      return new THREE.SphereGeometry(3, 32, 32)
+    case 'Sphere': {
+      const radius = controlValues.radius || 3
+      const resolution = controlValues.resolution || 32
+      return new THREE.SphereGeometry(radius, resolution, resolution)
+    }
     case 'Paraboloid':
-      return createParaboloidGeometry()
+      return createParaboloidGeometry(controlValues)
     case 'Hyperbolic Paraboloid':
       return createHyperbolicParaboloidGeometry()
     case 'Ellipsoid':
-      return createEllipsoidGeometry()
+      return createEllipsoidGeometry(controlValues)
     case 'Cone':
       return createDoubleConeGeometry()
     case 'Cylinder':
-      return createMathematicalCylinderGeometry()
-    case 'Torus (Doughnut)':
-      return new THREE.TorusGeometry(3, 1.5, 16, 100) // Better 2:1 ratio for mathematical accuracy
+      return createMathematicalCylinderGeometry(controlValues)
+    case 'Torus (Doughnut)': {
+      const R = controlValues.R || 3
+      const r = controlValues.r || 1.5
+      const resolutionTorus = controlValues.resolution || 100
+      return new THREE.TorusGeometry(R, r, 16, resolutionTorus)
+    }
     default:
       return new THREE.BoxGeometry(2, 2, 2)
   }
 }
 
-function createParaboloidGeometry(): THREE.BufferGeometry {
-  const geometry = new THREE.PlaneGeometry(8, 8, 50, 50)
+function createParaboloidGeometry(controlValues: Record<string, number> = {}): THREE.BufferGeometry {
+  const resolution = controlValues.resolution || 50
+  const scale = controlValues.scale || 8
+  const geometry = new THREE.PlaneGeometry(scale, scale, resolution, resolution)
   const positions = geometry.attributes.position.array as Float32Array
   
   for (let i = 0; i < positions.length; i += 3) {
     const x = positions[i]
     const y = positions[i + 1]
-    positions[i + 2] = (x * x + y * y) / 8
+    positions[i + 2] = (x * x + y * y) / scale
   }
   
   geometry.attributes.position.needsUpdate = true
@@ -351,14 +361,15 @@ function createHyperbolicParaboloidGeometry(): THREE.BufferGeometry {
   return geometry
 }
 
-function createEllipsoidGeometry(): THREE.BufferGeometry {
-  const geometry = new THREE.SphereGeometry(1, 32, 32)
+function createEllipsoidGeometry(controlValues: Record<string, number> = {}): THREE.BufferGeometry {
+  const resolution = controlValues.resolution || 32
+  const geometry = new THREE.SphereGeometry(1, resolution, resolution)
   const positions = geometry.attributes.position.array as Float32Array
   
   // Transform sphere into ellipsoid by scaling along different axes
-  const a = 3  // x-axis radius
-  const b = 2  // y-axis radius  
-  const c = 1.5 // z-axis radius
+  const a = controlValues.a || 3  // x-axis radius
+  const b = controlValues.b || 2  // y-axis radius  
+  const c = controlValues.c || 1.5 // z-axis radius
   
   for (let i = 0; i < positions.length; i += 3) {
     positions[i] *= a     // Scale x
@@ -371,11 +382,12 @@ function createEllipsoidGeometry(): THREE.BufferGeometry {
   return geometry
 }
 
-function createMathematicalCylinderGeometry(): THREE.BufferGeometry {
+function createMathematicalCylinderGeometry(controlValues: Record<string, number> = {}): THREE.BufferGeometry {
   // Create mathematical cylinder surface: x² + y² = r² (infinite cylinder without caps)
-  const radius = 2
-  const height = 8 // Extended height for mathematical representation
-  const radialSegments = 32
+  const radius = controlValues.radius || 2
+  const height = controlValues.height || 8 // Extended height for mathematical representation
+  const resolution = controlValues.resolution || 32
+  const radialSegments = resolution
   const heightSegments = 20
   
   // Create cylinder without caps using CylinderGeometry
@@ -566,14 +578,14 @@ function createHyperboloidTwoSheetsGeometry(): THREE.BufferGeometry {
   return geometry
 }
 
-function calculateSurfaceZ(graph: Graph, x: number, y: number): number {
+function calculateSurfaceZ(graph: Graph, x: number, y: number, controlValues: Record<string, number>): number {
   const originalEquation = graph.equation_latex
   
   // Handle parametric surfaces (u,v parameterization)
   if (graph.name === 'Helicoid') {
     // Right-handed helicoid: x = u*cos(v), y = u*sin(v), z = c*v
     // Given (x,y), find (u,v) and return z
-    const c = 1.0  // Increased pitch for better visualization
+    const c = controlValues.c || 1.0  // Use pitch from controls
     const v = Math.atan2(y, x)
     // Ensure right-handed orientation with positive c
     return c * v
@@ -583,15 +595,18 @@ function calculateSurfaceZ(graph: Graph, x: number, y: number): number {
     // This is complex - let's create a simpler approximation
     // x=u-u^3/3+uv^2, y=v-v^3/3+vu^2, z=u^2-v^2
     // Use x and y as approximations for u and v
-    const u = x * 0.5
-    const v = y * 0.5
+    const scale = controlValues.scale || 0.5
+    const u = x * scale
+    const v = y * scale
     return u*u - v*v
   }
   
   // Handle specific implicit equations by solving for z
   if (graph.name === 'Ellipsoid') {
     // x^2/a^2 + y^2/b^2 + z^2/c^2 = 1 -> z = ±c*sqrt(1 - x^2/a^2 - y^2/b^2)
-    const a = 3, b = 2, c = 1.5
+    const a = controlValues.a || 3
+    const b = controlValues.b || 2
+    const c = controlValues.c || 1.5
     const term = 1 - (x*x)/(a*a) - (y*y)/(b*b)
     return term >= 0 ? c * Math.sqrt(term) : 0
   }
@@ -649,8 +664,8 @@ function calculateSurfaceZ(graph: Graph, x: number, y: number): number {
   
   if (graph.name === 'Gaussian (Bell Curve) Surface') {
     // z = A * e^(-(x^2+y^2)/σ^2) - standard 2D Gaussian centered at origin
-    const sigma = 2.5 // Standard deviation - controls width of bell curve
-    const amplitude = 4 // Height scaling for better visibility
+    const sigma = controlValues.sigma || 2.5 // Standard deviation from controls
+    const amplitude = controlValues.amplitude || 4 // Height scaling from controls
     // Create proper bell curve that peaks upward at center (0,0)
     return amplitude * Math.exp(-(x*x + y*y) / (2 * sigma * sigma))
   }
@@ -658,8 +673,9 @@ function calculateSurfaceZ(graph: Graph, x: number, y: number): number {
   if (graph.name === 'Monkey Saddle') {
     // z = x^3 - 3*x*y^2, but limit the growth
     const z = x*x*x - 3*x*y*y
+    const scale = controlValues.scale || 0.2
     // Clamp the values to prevent extreme scaling
-    return Math.max(-5, Math.min(5, z * 0.2))
+    return Math.max(-5, Math.min(5, z * scale))
   }
   
   if (graph.name === 'Wave Function (Quantum Mechanics)') {
@@ -710,7 +726,7 @@ function calculateSurfaceZ(graph: Graph, x: number, y: number): number {
   }
 }
 
-function calculate2DFunction(graph: Graph, x: number): number {
+function calculate2DFunction(graph: Graph, x: number, controlValues: Record<string, number>): number {
   // Handle specific problematic functions
   if (graph.name === 'Square Root Function') {
     return x >= 0 ? Math.sqrt(x) : 0
@@ -750,7 +766,10 @@ function calculate2DFunction(graph: Graph, x: number): number {
   }
   
   if (graph.name === 'Sine and Cosine Waves') {
-    const A = 1, B = 1, C = 0, D = 0
+    const A = controlValues.A || 1
+    const B = controlValues.B || 1
+    const C = controlValues.C || 0
+    const D = controlValues.D || 0
     return A * Math.sin(B * x + C) + D
   }
   
@@ -758,23 +777,23 @@ function calculate2DFunction(graph: Graph, x: number): number {
   if (graph.name === 'Position vs. Time (Kinematics)') {
     // Show motion with initial velocity and acceleration: x = x₀ + v₀t + ½at²
     // Let x represent time t, return position x(t)
-    const x0 = 1 // Initial position (m)
-    const v0 = 2 // Initial velocity (m/s)
-    const a = 0.3 // Acceleration (m/s²)
+    const x0 = controlValues.x0 || 1 // Initial position from controls
+    const v0 = controlValues.v0 || 2 // Initial velocity from controls
+    const a = controlValues.a || 0.3 // Acceleration from controls
     return x0 + v0 * x + 0.5 * a * x * x // Classic kinematic equation
   }
   
   if (graph.name === 'Velocity vs. Time (Kinematics)') {
     // Velocity as function of time: v = v₀ + at
-    const v0 = 2 // Initial velocity (m/s)
-    const a = 0.3 // Acceleration (m/s²) - consistent with position equation
+    const v0 = controlValues.v0 || 2 // Initial velocity from controls
+    const a = controlValues.a || 0.3 // Acceleration from controls
     return v0 + a * x // Derivative of position function
   }
   
   if (graph.name === 'Acceleration vs. Time (Kinematics)') {
     // Acceleration as function of time - derivative of velocity
     // For constant acceleration, this should be horizontal line
-    const a = 0.3 // Constant acceleration (m/s²) - consistent with velocity equation
+    const a = controlValues.a || 0.3 // Constant acceleration from controls
     return a // Constant acceleration
   }
   

@@ -6,7 +6,8 @@
       "Bash(mkdir:*)",
       "Bash(npm install:*)",
       "WebFetch(domain:en.wikipedia.org)",
-      "Bash(npm run build:*)"
+      "Bash(npm run build:*)",
+      "Bash(grep:*)"
     ],
     "deny": [],
     "ask": []

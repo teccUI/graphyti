@@ -171,9 +171,6 @@ export default function LeftSidebar({ selectedGraph, onGraphChange }: LeftSideba
               border: 'none'
             }
           }}
-          TransitionProps={{
-            timeout: 65
-          }}
           IconComponent={() => (
             <Box sx={{ 
               position: 'absolute', 

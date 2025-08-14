@@ -1,0 +1,437 @@
+
+[
+  {
+    "id": "graph_001",
+    "name": "Paraboloid",
+    "controls": [
+      { "name": "resolution", "label": "Resolution", "defaultValue": 50, "min": 10, "max": 100, "step": 1 },
+      { "name": "scale", "label": "Scale", "defaultValue": 8, "min": 1, "max": 20, "step": 0.5 }
+    ]
+  },
+  {
+    "id": "graph_002",
+    "name": "Hyperbolic Paraboloid",
+    "controls": [
+      { "name": "resolution", "label": "Resolution", "defaultValue": 50, "min": 10, "max": 100, "step": 1 },
+      { "name": "scale", "label": "Scale", "defaultValue": 8, "min": 1, "max": 20, "step": 0.5 }
+    ]
+  },
+  {
+    "id": "graph_003",
+    "name": "Ellipsoid",
+    "controls": [
+      { "name": "resolution", "label": "Resolution", "defaultValue": 32, "min": 10, "max": 100, "step": 1 },
+      { "name": "a", "label": "X-axis radius", "defaultValue": 3, "min": 0.5, "max": 10, "step": 0.1 },
+      { "name": "b", "label": "Y-axis radius", "defaultValue": 2, "min": 0.5, "max": 10, "step": 0.1 },
+      { "name": "c", "label": "Z-axis radius", "defaultValue": 1.5, "min": 0.5, "max": 10, "step": 0.1 }
+    ]
+  },
+  {
+    "id": "graph_004",
+    "name": "Cone",
+    "controls": [
+      { "name": "resolution", "label": "Resolution", "defaultValue": 30, "min": 10, "max": 100, "step": 1 },
+      { "name": "a", "label": "X-axis scale", "defaultValue": 2, "min": 0.5, "max": 10, "step": 0.1 },
+      { "name": "c", "label": "Z-axis scale", "defaultValue": 2, "min": 0.5, "max": 10, "step": 0.1 },
+      { "name": "zRange", "label": "Z-axis Range", "defaultValue": 4, "min": 1, "max": 10, "step": 0.5 }
+    ]
+  },
+  {
+    "id": "graph_005",
+    "name": "Hyperboloid of One Sheet",
+    "controls": [
+      { "name": "resolution", "label": "Resolution", "defaultValue": 40, "min": 10, "max": 100, "step": 1 },
+      { "name": "a", "label": "X/Y-axis scale", "defaultValue": 2, "min": 0.5, "max": 10, "step": 0.1 },
+      { "name": "c", "label": "Z-axis scale", "defaultValue": 2, "min": 0.5, "max": 10, "step": 0.1 },
+      { "name": "zRange", "label": "Z-axis Range", "defaultValue": 4, "min": 1, "max": 10, "step": 0.5 }
+    ]
+  },
+  {
+    "id": "graph_006",
+    "name": "Hyperboloid of Two Sheets",
+    "controls": [
+      { "name": "resolution", "label": "Resolution", "defaultValue": 30, "min": 10, "max": 100, "step": 1 },
+      { "name": "a", "label": "X/Y-axis scale", "defaultValue": 2, "min": 0.5, "max": 10, "step": 0.1 },
+      { "name": "c", "label": "Z-axis scale", "defaultValue": 2, "min": 0.5, "max": 10, "step": 0.1 },
+      { "name": "zMin", "label": "Min Z", "defaultValue": 1.2, "min": 0.1, "max": 5, "step": 0.1 },
+      { "name": "zMax", "label": "Max Z", "defaultValue": 4, "min": 1, "max": 10, "step": 0.1 }
+    ]
+  },
+  {
+    "id": "graph_007",
+    "name": "Cylinder",
+    "controls": [
+      { "name": "resolution", "label": "Resolution", "defaultValue": 32, "min": 10, "max": 100, "step": 1 },
+      { "name": "radius", "label": "Radius", "defaultValue": 2, "min": 0.5, "max": 10, "step": 0.1 },
+      { "name": "height", "label": "Height", "defaultValue": 8, "min": 1, "max": 20, "step": 0.5 }
+    ]
+  },
+  {
+    "id": "graph_008",
+    "name": "Torus (Doughnut)",
+    "controls": [
+      { "name": "resolution", "label": "Resolution", "defaultValue": 100, "min": 10, "max": 200, "step": 1 },
+      { "name": "R", "label": "Major Radius", "defaultValue": 3, "min": 0.5, "max": 10, "step": 0.1 },
+      { "name": "r", "label": "Minor Radius", "defaultValue": 1.5, "min": 0.1, "max": 5, "step": 0.1 }
+    ]
+  },
+  {
+    "id": "graph_009",
+    "name": "Helicoid",
+    "controls": [
+      { "name": "resolution", "label": "Resolution", "defaultValue": 50, "min": 10, "max": 100, "step": 1 },
+      { "name": "c", "label": "Pitch", "defaultValue": 1.0, "min": 0.1, "max": 5, "step": 0.1 }
+    ]
+  },
+  {
+    "id": "graph_010",
+    "name": "Sine Wave Surface",
+    "controls": [
+      { "name": "resolution", "label": "Resolution", "defaultValue": 50, "min": 10, "max": 100, "step": 1 }
+    ]
+  },
+  {
+    "id": "graph_011",
+    "name": "Gaussian (Bell Curve) Surface",
+    "controls": [
+      { "name": "resolution", "label": "Resolution", "defaultValue": 50, "min": 10, "max": 100, "step": 1 },
+      { "name": "sigma", "label": "Standard Deviation", "defaultValue": 2.5, "min": 0.1, "max": 10, "step": 0.1 },
+      { "name": "amplitude", "label": "Amplitude", "defaultValue": 4, "min": 1, "max": 10, "step": 0.1 }
+    ]
+  },
+  {
+    "id": "graph_012",
+    "name": "Monkey Saddle",
+    "controls": [
+      { "name": "resolution", "label": "Resolution", "defaultValue": 50, "min": 10, "max": 100, "step": 1 },
+      { "name": "scale", "label": "Scale", "defaultValue": 0.2, "min": 0.05, "max": 1, "step": 0.05 }
+    ]
+  },
+  {
+    "id": "graph_013",
+    "name": "Sphere",
+    "controls": [
+      { "name": "resolution", "label": "Resolution", "defaultValue": 32, "min": 10, "max": 100, "step": 1 },
+      { "name": "radius", "label": "Radius", "defaultValue": 3, "min": 0.5, "max": 10, "step": 0.1 }
+    ]
+  },
+  {
+    "id": "graph_014",
+    "name": "Linear Function (Plane)",
+    "controls": [
+      { "name": "resolution", "label": "Resolution", "defaultValue": 50, "min": 10, "max": 100, "step": 1 },
+      { "name": "a", "label": "a", "defaultValue": 1, "min": -5, "max": 5, "step": 0.1 },
+      { "name": "b", "label": "b", "defaultValue": 1, "min": -5, "max": 5, "step": 0.1 },
+      { "name": "c", "label": "c", "defaultValue": 1, "min": -5, "max": 5, "step": 0.1 },
+      { "name": "d", "label": "d", "defaultValue": 0, "min": -5, "max": 5, "step": 0.1 }
+    ]
+  },
+  {
+    "id": "graph_015",
+    "name": "Quadratic Function (Parabola)",
+    "controls": [
+      { "name": "resolution", "label": "Resolution", "defaultValue": 50, "min": 10, "max": 200, "step": 1 },
+      { "name": "a", "label": "a", "defaultValue": 1, "min": -5, "max": 5, "step": 0.1 },
+      { "name": "b", "label": "b", "defaultValue": 0, "min": -5, "max": 5, "step": 0.1 },
+      { "name": "c", "label": "c", "defaultValue": 0, "min": -5, "max": 5, "step": 0.1 }
+    ]
+  },
+  {
+    "id": "graph_016",
+    "name": "Cubic Function",
+    "controls": [
+      { "name": "resolution", "label": "Resolution", "defaultValue": 50, "min": 10, "max": 200, "step": 1 },
+      { "name": "a", "label": "a", "defaultValue": 1, "min": -5, "max": 5, "step": 0.1 },
+      { "name": "b", "label": "b", "defaultValue": 0, "min": -5, "max": 5, "step": 0.1 },
+      { "name": "c", "label": "c", "defaultValue": -3, "min": -5, "max": 5, "step": 0.1 },
+      { "name": "d", "label": "d", "defaultValue": 0, "min": -5, "max": 5, "step": 0.1 }
+    ]
+  },
+  {
+    "id": "graph_017",
+    "name": "Square Root Function",
+    "controls": [
+      { "name": "resolution", "label": "Resolution", "defaultValue": 50, "min": 10, "max": 200, "step": 1 }
+    ]
+  },
+  {
+    "id": "graph_018",
+    "name": "Absolute Value Function",
+    "controls": [
+      { "name": "resolution", "label": "Resolution", "defaultValue": 50, "min": 10, "max": 200, "step": 1 }
+    ]
+  },
+  {
+    "id": "graph_019",
+    "name": "Reciprocal Function (Hyperbola)",
+    "controls": [
+      { "name": "resolution", "label": "Resolution", "defaultValue": 50, "min": 10, "max": 200, "step": 1 }
+    ]
+  },
+  {
+    "id": "graph_020",
+    "name": "Sine and Cosine Waves",
+    "controls": [
+      { "name": "resolution", "label": "Resolution", "defaultValue": 50, "min": 10, "max": 200, "step": 1 },
+      { "name": "A", "label": "Amplitude", "defaultValue": 1, "min": 0.1, "max": 5, "step": 0.1 },
+      { "name": "B", "label": "Frequency", "defaultValue": 1, "min": 0.1, "max": 10, "step": 0.1 },
+      { "name": "C", "label": "Phase Shift", "defaultValue": 0, "min": -3.14, "max": 3.14, "step": 0.1 },
+      { "name": "D", "label": "Vertical Shift", "defaultValue": 0, "min": -5, "max": 5, "step": 0.1 }
+    ]
+  },
+  {
+    "id": "graph_021",
+    "name": "Tangent Function",
+    "controls": [
+      { "name": "resolution", "label": "Resolution", "defaultValue": 50, "min": 10, "max": 200, "step": 1 }
+    ]
+  },
+  {
+    "id": "graph_022",
+    "name": "Exponential Growth/Decay",
+    "controls": [
+      { "name": "resolution", "label": "Resolution", "defaultValue": 50, "min": 10, "max": 200, "step": 1 },
+      { "name": "a", "label": "a", "defaultValue": 1, "min": -5, "max": 5, "step": 0.1 },
+      { "name": "k", "label": "k", "defaultValue": 1, "min": -5, "max": 5, "step": 0.1 }
+    ]
+  },
+  {
+    "id": "graph_023",
+    "name": "Logarithmic Function",
+    "controls": [
+      { "name": "resolution", "label": "Resolution", "defaultValue": 50, "min": 10, "max": 200, "step": 1 }
+    ]
+  },
+  {
+    "id": "graph_024",
+    "name": "Circle",
+    "controls": [
+      { "name": "resolution", "label": "Resolution", "defaultValue": 50, "min": 10, "max": 200, "step": 1 },
+      { "name": "r", "label": "Radius", "defaultValue": 3, "min": 0.5, "max": 10, "step": 0.1 }
+    ]
+  },
+  {
+    "id": "graph_025",
+    "name": "Ellipse",
+    "controls": [
+      { "name": "resolution", "label": "Resolution", "defaultValue": 50, "min": 10, "max": 200, "step": 1 },
+      { "name": "a", "label": "X-axis radius", "defaultValue": 4, "min": 0.5, "max": 10, "step": 0.1 },
+      { "name": "b", "label": "Y-axis radius", "defaultValue": 2, "min": 0.5, "max": 10, "step": 0.1 }
+    ]
+  },
+  {
+    "id": "graph_026",
+    "name": "Cycloid",
+    "controls": [
+      { "name": "resolution", "label": "Resolution", "defaultValue": 50, "min": 10, "max": 200, "step": 1 },
+      { "name": "r", "label": "Radius", "defaultValue": 1.5, "min": 0.1, "max": 5, "step": 0.1 }
+    ]
+  },
+  {
+    "id": "graph_027",
+    "name": "Lissajous Curve",
+    "controls": [
+      { "name": "resolution", "label": "Resolution", "defaultValue": 50, "min": 10, "max": 200, "step": 1 },
+      { "name": "A", "label": "X Amplitude", "defaultValue": 3, "min": 0.1, "max": 5, "step": 0.1 },
+      { "name": "B", "label": "Y Amplitude", "defaultValue": 2, "min": 0.1, "max": 5, "step": 0.1 },
+      { "name": "a", "label": "X Frequency", "defaultValue": 3, "min": 1, "max": 10, "step": 1 },
+      { "name": "b", "label": "Y Frequency", "defaultValue": 2, "min": 1, "max": 10, "step": 1 },
+      { "name": "delta", "label": "Phase Shift", "defaultValue": 0.785, "min": 0, "max": 6.28, "step": 0.01 }
+    ]
+  },
+  {
+    "id": "graph_028",
+    "name": "Trefoil Knot",
+    "controls": [
+      { "name": "resolution", "label": "Resolution", "defaultValue": 50, "min": 10, "max": 200, "step": 1 },
+      { "name": "R", "label": "Major Radius", "defaultValue": 2, "min": 1, "max": 5, "step": 0.1 },
+      { "name": "n", "label": "Frequency", "defaultValue": 3, "min": 1, "max": 10, "step": 1 }
+    ]
+  },
+  {
+    "id": "graph_029",
+    "name": "Position vs. Time (Kinematics)",
+    "controls": [
+      { "name": "resolution", "label": "Resolution", "defaultValue": 50, "min": 10, "max": 200, "step": 1 },
+      { "name": "x0", "label": "Initial Position", "defaultValue": 1, "min": -10, "max": 10, "step": 0.5 },
+      { "name": "v0", "label": "Initial Velocity", "defaultValue": 2, "min": -10, "max": 10, "step": 0.5 },
+      { "name": "a", "label": "Acceleration", "defaultValue": 0.3, "min": -5, "max": 5, "step": 0.1 }
+    ]
+  },
+  {
+    "id": "graph_030",
+    "name": "Velocity vs. Time (Kinematics)",
+    "controls": [
+      { "name": "resolution", "label": "Resolution", "defaultValue": 50, "min": 10, "max": 200, "step": 1 },
+      { "name": "v0", "label": "Initial Velocity", "defaultValue": 2, "min": -10, "max": 10, "step": 0.5 },
+      { "name": "a", "label": "Acceleration", "defaultValue": 0.3, "min": -5, "max": 5, "step": 0.1 }
+    ]
+  },
+  {
+    "id": "graph_031",
+    "name": "Acceleration vs. Time (Kinematics)",
+    "controls": [
+      { "name": "resolution", "label": "Resolution", "defaultValue": 50, "min": 10, "max": 200, "step": 1 },
+      { "name": "a", "label": "Acceleration", "defaultValue": 0.3, "min": -5, "max": 5, "step": 0.1 }
+    ]
+  },
+  {
+    "id": "graph_032",
+    "name": "Force vs. Extension (Hooke's Law)",
+    "controls": [
+      { "name": "resolution", "label": "Resolution", "defaultValue": 50, "min": 10, "max": 200, "step": 1 },
+      { "name": "k", "label": "Spring Constant", "defaultValue": 2, "min": 0.1, "max": 10, "step": 0.1 }
+    ]
+  },
+  {
+    "id": "graph_033",
+    "name": "Pressure vs. Volume (Boyle's Law)",
+    "controls": [
+      { "name": "resolution", "label": "Resolution", "defaultValue": 50, "min": 10, "max": 200, "step": 1 },
+      { "name": "k", "label": "Constant", "defaultValue": 5, "min": 1, "max": 20, "step": 0.5 }
+    ]
+  },
+  {
+    "id": "graph_034",
+    "name": "Volume vs. Temperature (Charles's Law)",
+    "controls": [
+      { "name": "resolution", "label": "Resolution", "defaultValue": 50, "min": 10, "max": 200, "step": 1 },
+      { "name": "k", "label": "Proportionality Constant", "defaultValue": 0.01, "min": 0.001, "max": 0.1, "step": 0.001 }
+    ]
+  },
+  {
+    "id": "graph_035",
+    "name": "Pressure vs. Temperature (Gay-Lussac's Law)",
+    "controls": [
+      { "name": "resolution", "label": "Resolution", "defaultValue": 50, "min": 10, "max": 200, "step": 1 },
+      { "name": "k", "label": "Proportionality Constant", "defaultValue": 0.02, "min": 0.001, "max": 0.1, "step": 0.001 }
+    ]
+  },
+  {
+    "id": "graph_036",
+    "name": "I-V Characteristic of a Resistor",
+    "controls": [
+      { "name": "resolution", "label": "Resolution", "defaultValue": 50, "min": 10, "max": 200, "step": 1 },
+      { "name": "R", "label": "Resistance", "defaultValue": 2, "min": 0.1, "max": 10, "step": 0.1 }
+    ]
+  },
+  {
+    "id": "graph_037",
+    "name": "I-V Characteristic of a Diode",
+    "controls": [
+      { "name": "resolution", "label": "Resolution", "defaultValue": 50, "min": 10, "max": 200, "step": 1 },
+      { "name": "V_T", "label": "Thermal Voltage", "defaultValue": 0.026, "min": 0.01, "max": 0.1, "step": 0.001 }
+    ]
+  },
+  {
+    "id": "graph_038",
+    "name": "Blackbody Radiation Spectrum",
+    "controls": [
+      { "name": "resolution", "label": "Resolution", "defaultValue": 50, "min": 10, "max": 200, "step": 1 },
+      { "name": "T", "label": "Temperature (K)", "defaultValue": 300, "min": 100, "max": 6000, "step": 50 }
+    ]
+  },
+  {
+    "id": "graph_039",
+    "name": "Photoelectric Effect",
+    "controls": [
+      { "name": "resolution", "label": "Resolution", "defaultValue": 50, "min": 10, "max": 200, "step": 1 },
+      { "name": "workFunction", "label": "Work Function (eV)", "defaultValue": 2, "min": 0.1, "max": 10, "step": 0.1 }
+    ]
+  },
+  {
+    "id": "graph_040",
+    "name": "Binding Energy per Nucleon",
+    "controls": [
+      { "name": "resolution", "label": "Resolution", "defaultValue": 50, "min": 10, "max": 200, "step": 1 }
+    ]
+  },
+  {
+    "id": "graph_041",
+    "name": "Simple Harmonic Motion",
+    "controls": [
+      { "name": "resolution", "label": "Resolution", "defaultValue": 50, "min": 10, "max": 200, "step": 1 },
+      { "name": "A", "label": "Amplitude", "defaultValue": 2, "min": 0.1, "max": 5, "step": 0.1 },
+      { "name": "omega", "label": "Angular Frequency", "defaultValue": 1, "min": 0.1, "max": 10, "step": 0.1 },
+      { "name": "phi", "label": "Phase Angle", "defaultValue": 0, "min": -3.14, "max": 3.14, "step": 0.1 }
+    ]
+  },
+  {
+    "id": "graph_042",
+    "name": "Damped Oscillations",
+    "controls": [
+      { "name": "resolution", "label": "Resolution", "defaultValue": 50, "min": 10, "max": 200, "step": 1 },
+      { "name": "A", "label": "Amplitude", "defaultValue": 2, "min": 0.1, "max": 5, "step": 0.1 },
+      { "name": "gamma", "label": "Damping Coefficient", "defaultValue": 0.1, "min": 0, "max": 1, "step": 0.05 },
+      { "name": "omega", "label": "Angular Frequency", "defaultValue": 1, "min": 0.1, "max": 10, "step": 0.1 },
+      { "name": "phi", "label": "Phase Angle", "defaultValue": 0, "min": -3.14, "max": 3.14, "step": 0.1 }
+    ]
+  },
+  {
+    "id": "graph_043",
+    "name": "Wave Function (Quantum Mechanics)",
+    "controls": [
+      { "name": "resolution", "label": "Resolution", "defaultValue": 50, "min": 10, "max": 100, "step": 1 },
+      { "name": "waveLength", "label": "Wavelength", "defaultValue": 2, "min": 0.5, "max": 10, "step": 0.1 },
+      { "name": "amplitude", "label": "Amplitude", "defaultValue": 1.5, "min": 0.1, "max": 5, "step": 0.1 },
+      { "name": "envelope", "label": "Envelope Width", "defaultValue": 3, "min": 1, "max": 10, "step": 0.1 }
+    ]
+  },
+  {
+    "id": "graph_044",
+    "name": "Astroid",
+    "controls": [
+      { "name": "resolution", "label": "Resolution", "defaultValue": 50, "min": 10, "max": 200, "step": 1 },
+      { "name": "a", "label": "Radius", "defaultValue": 3, "min": 0.5, "max": 10, "step": 0.1 }
+    ]
+  },
+  {
+    "id": "graph_045",
+    "name": "Cardioid",
+    "controls": [
+      { "name": "resolution", "label": "Resolution", "defaultValue": 50, "min": 10, "max": 200, "step": 1 },
+      { "name": "a", "label": "Scale", "defaultValue": 2, "min": 0.1, "max": 5, "step": 0.1 }
+    ]
+  },
+  {
+    "id": "graph_046",
+    "name": "Rose Curve",
+    "controls": [
+      { "name": "resolution", "label": "Resolution", "defaultValue": 50, "min": 10, "max": 200, "step": 1 },
+      { "name": "a", "label": "Scale", "defaultValue": 3, "min": 0.1, "max": 5, "step": 0.1 },
+      { "name": "k", "label": "Petals (k)", "defaultValue": 5, "min": 1, "max": 15, "step": 1 }
+    ]
+  },
+  {
+    "id": "graph_047",
+    "name": "Lemniscate of Bernoulli",
+    "controls": [
+      { "name": "resolution", "label": "Resolution", "defaultValue": 50, "min": 10, "max": 200, "step": 1 },
+      { "name": "a", "label": "Scale", "defaultValue": 2, "min": 0.1, "max": 5, "step": 0.1 }
+    ]
+  },
+  {
+    "id": "graph_048",
+    "name": "Witch of Agnesi",
+    "controls": [
+      { "name": "resolution", "label": "Resolution", "defaultValue": 50, "min": 10, "max": 200, "step": 1 },
+      { "name": "a", "label": "a", "defaultValue": 1, "min": 0.1, "max": 5, "step": 0.1 }
+    ]
+  },
+  {
+    "id": "graph_049",
+    "name": "Viviani's Curve",
+    "controls": [
+      { "name": "resolution", "label": "Resolution", "defaultValue": 50, "min": 10, "max": 200, "step": 1 },
+      { "name": "a", "label": "Scale", "defaultValue": 2, "min": 0.1, "max": 5, "step": 0.1 }
+    ]
+  },
+  {
+    "id": "graph_050",
+    "name": "Enneper Surface",
+    "controls": [
+      { "name": "resolution", "label": "Resolution", "defaultValue": 50, "min": 10, "max": 100, "step": 1 },
+      { "name": "scale", "label": "Scale", "defaultValue": 0.5, "min": 0.1, "max": 2, "step": 0.05 }
+    ]
+  }
+]

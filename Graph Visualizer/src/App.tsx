@@ -1,8 +1,10 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Box } from '@mui/material'
 import LeftSidebar from './components/LeftSidebar'
 import RightCanvas from './components/RightCanvas'
+import GraphControls from './components/GraphControls'
 import graphList from '../graphList.json'
+import graphControls from '../graphControls.json'
 
 interface Graph {
   id: string
@@ -16,13 +18,34 @@ interface Graph {
 }
 
 function App() {
-  const [selectedGraph, setSelectedGraph] = useState<Graph | null>(null)
+  const [selectedGraph, setSelectedGraph] = useState<Graph | null>(graphList[0] as Graph)
+  const [controlValues, setControlValues] = useState<Record<string, number>>({})
+
+  useEffect(() => {
+    if (selectedGraph) {
+      const graphControlData = graphControls.find(gc => gc.id === selectedGraph.id)
+      if (graphControlData) {
+        const defaultValues: Record<string, number> = {}
+        graphControlData.controls.forEach(control => {
+          defaultValues[control.name] = control.defaultValue
+        })
+        setControlValues(defaultValues)
+      }
+    }
+  }, [selectedGraph])
 
   const handleGraphChange = (graphId: string) => {
     const graph = graphList.find(g => g.id === graphId) as Graph
     if (graph) {
       setSelectedGraph(graph)
     }
+  }
+
+  const handleControlValueChange = (controlName: string, value: number) => {
+    setControlValues(prev => ({
+      ...prev,
+      [controlName]: value
+    }))
   }
 
   const handlePreviousGraph = () => {
@@ -96,8 +119,23 @@ function App() {
             selectedGraph={selectedGraph} 
             onPreviousGraph={handlePreviousGraph}
             onNextGraph={handleNextGraph}
+            controlValues={controlValues}
           />
         </Box>
+      </Box>
+
+      <Box sx={{
+        width: '418px',
+        maxWidth: '418px',
+        marginLeft: '60px',
+        display: { xs: 'none', md: 'block' },
+        flexShrink: 0
+      }}>
+        <GraphControls 
+          controls={selectedGraph ? graphControls.find(gc => gc.id === selectedGraph.id)?.controls || [] : []}
+          values={controlValues}
+          onValueChange={handleControlValueChange}
+        />
       </Box>
     </Box>
   )
