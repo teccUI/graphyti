@@ -778,9 +778,16 @@ function calculate2DFunction(graph: Graph, x: number, controlValues: Record<stri
   }
   
   if (graph.name === 'Reciprocal Function (Hyperbola)') {
+    // For reciprocal function y = k/x with proper scaling:
+    // xScale affects horizontal compression/expansion
+    // yScale affects vertical compression/expansion
     const xScale = controlValues.xScale || 1
     const yScale = controlValues.yScale || 1
-    const scaledX = x / xScale
+    
+    // Apply horizontal scaling: compress x-axis by xScale factor
+    const scaledX = x * xScale
+    
+    // Apply vertical scaling to the reciprocal result
     return scaledX !== 0 ? yScale / scaledX : 0
   }
   
