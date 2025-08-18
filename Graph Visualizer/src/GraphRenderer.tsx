@@ -52,7 +52,7 @@ function GraphRenderer({ graph, controlValues }: GraphRendererProps) {
         case '2D Parametric':
           return createParametricGeometry(graph, resolution, controlValues)
         case '3D Parametric Curve':
-          return createParametricCurveGeometry(graph, resolution)
+          return createParametricCurveGeometry(graph, resolution, controlValues)
         case '2D Polar':
           return createPolarGeometry(graph, resolution, controlValues)
         default:
@@ -182,12 +182,13 @@ function createParametricGeometry(graph: Graph, resolution: number, controlValue
   if (shouldRenderAsFilled) {
     // Create filled surface using THREE.ShapeGeometry
     const points: THREE.Vector2[] = []
-    const tMax = 2 * Math.PI
-    const step = tMax / resolution
+    const tMin = controlValues.tMin || 0
+    const tMax = controlValues.tMax || 2 * Math.PI
+    const step = (tMax - tMin) / resolution
     
     // Generate outline points that define the shape boundary
     for (let i = 0; i <= resolution; i++) {
-      const t = i * step
+      const t = tMin + i * step
       try {
         const { x, y } = calculateParametric2D(graph, t, controlValues)
         points.push(new THREE.Vector2(x, y))
@@ -208,11 +209,12 @@ function createParametricGeometry(graph: Graph, resolution: number, controlValue
   } else {
     // Create line geometry for curves
     const points: THREE.Vector3[] = []
-    const tMax = 2 * Math.PI
-    const step = tMax / resolution
+    const tMin = controlValues.tMin || 0
+    const tMax = controlValues.tMax || 2 * Math.PI
+    const step = (tMax - tMin) / resolution
     
     for (let i = 0; i <= resolution; i++) {
-      const t = i * step
+      const t = tMin + i * step
       try {
         const { x, y } = calculateParametric2D(graph, t, controlValues)
         points.push(new THREE.Vector3(x, y, 0))
@@ -225,15 +227,16 @@ function createParametricGeometry(graph: Graph, resolution: number, controlValue
   }
 }
 
-function createParametricCurveGeometry(graph: Graph, resolution: number): THREE.BufferGeometry {
+function createParametricCurveGeometry(graph: Graph, resolution: number, controlValues: Record<string, number> = {}): THREE.BufferGeometry {
   const points: THREE.Vector3[] = []
-  const tMax = 2 * Math.PI
-  const step = tMax / resolution
+  const tMin = controlValues.tMin || 0
+  const tMax = controlValues.tMax || 2 * Math.PI
+  const step = (tMax - tMin) / resolution
   
   for (let i = 0; i <= resolution; i++) {
-    const t = i * step
+    const t = tMin + i * step
     try {
-      const { x, y, z } = calculateParametric3D(graph, t)
+      const { x, y, z } = calculateParametric3D(graph, t, controlValues)
       points.push(new THREE.Vector3(x, y, z))
     } catch {
       continue
@@ -332,13 +335,16 @@ function createDefaultGeometry(graph: Graph, controlValues: Record<string, numbe
 function createParaboloidGeometry(controlValues: Record<string, number> = {}): THREE.BufferGeometry {
   const resolution = controlValues.resolution || 50
   const scale = controlValues.scale || 8
+  const a = controlValues.a || 2
+  const b = controlValues.b || 2
   const geometry = new THREE.PlaneGeometry(scale, scale, resolution, resolution)
   const positions = geometry.attributes.position.array as Float32Array
   
   for (let i = 0; i < positions.length; i += 3) {
     const x = positions[i]
     const y = positions[i + 1]
-    positions[i + 2] = (x * x + y * y) / scale
+    // Paraboloid: z = x²/a² + y²/b² with scale factor
+    positions[i + 2] = ((x * x) / (a * a) + (y * y) / (b * b)) * scale / 8
   }
   
   geometry.attributes.position.needsUpdate = true
@@ -349,13 +355,16 @@ function createParaboloidGeometry(controlValues: Record<string, number> = {}): T
 function createHyperbolicParaboloidGeometry(controlValues: Record<string, number> = {}): THREE.BufferGeometry {
   const resolution = controlValues.resolution || 50
   const scale = controlValues.scale || 8
+  const a = controlValues.a || 2
+  const b = controlValues.b || 2
   const geometry = new THREE.PlaneGeometry(scale, scale, resolution, resolution)
   const positions = geometry.attributes.position.array as Float32Array
   
   for (let i = 0; i < positions.length; i += 3) {
     const x = positions[i]
     const y = positions[i + 1]
-    positions[i + 2] = (x * x - y * y) / scale
+    // Hyperbolic Paraboloid: z = x²/a² - y²/b² with scale factor
+    positions[i + 2] = ((x * x) / (a * a) - (y * y) / (b * b)) * scale / 8
   }
   
   geometry.attributes.position.needsUpdate = true
@@ -389,8 +398,8 @@ function createMathematicalCylinderGeometry(controlValues: Record<string, number
   const radius = controlValues.radius || 2
   const height = controlValues.height || 8 // Extended height for mathematical representation
   const resolution = controlValues.resolution || 32
-  const radialSegments = resolution
-  const heightSegments = 20
+  const radialSegments = Math.max(8, Math.min(64, resolution))
+  const heightSegments = Math.max(4, Math.min(20, resolution / 4))
   
   // Create cylinder without caps using CylinderGeometry
   const geometry = new THREE.CylinderGeometry(radius, radius, height, radialSegments, heightSegments, true) // openEnded = true
@@ -458,42 +467,52 @@ function createHyperboloidOneSheetGeometry(controlValues: Record<string, number>
 }
 
 function createDoubleConeGeometry(controlValues: Record<string, number> = {}): THREE.BufferGeometry {
-  // Create mathematical double cone surface: x²/a² + y²/b² = z²/c²
-  // This creates two cone surfaces meeting at the origin using THREE.js built-in geometry
-  const radiusBottom = controlValues.a || 2 // Base radius
-  const height = controlValues.zRange || 4 // Height from origin to base
-  const radialSegments = Math.max(8, Math.min(32, controlValues.resolution || 16))
+  // Create mathematical cone surface: x²/a² + y²/b² = z²/c²
+  // Option for single or double cone
+  const a = controlValues.a || 2 // Base radius (using a parameter)
+  const zRange = controlValues.zRange || 4 // Height from origin to base
+  const resolution = controlValues.resolution || 16
+  const doubleCone = controlValues.doubleCone || 1 // 1 = double, 0 = single
+  const radialSegments = Math.max(8, Math.min(32, resolution))
   
-  // Create upper cone
-  const upperCone = new THREE.ConeGeometry(radiusBottom, height, radialSegments, 1, true)
-  upperCone.translate(0, height/2, 0)
-  
-  // Create lower cone (inverted)
-  const lowerCone = new THREE.ConeGeometry(radiusBottom, height, radialSegments, 1, true)
-  lowerCone.translate(0, -height/2, 0)
-  lowerCone.rotateX(Math.PI) // Flip upside down
-  
-  // Merge the two cones manually
-  const upperPositions = upperCone.attributes.position.array as Float32Array
-  const lowerPositions = lowerCone.attributes.position.array as Float32Array
-  
-  // Combine positions
-  const combinedPositions = new Float32Array(upperPositions.length + lowerPositions.length)
-  combinedPositions.set(upperPositions, 0)
-  combinedPositions.set(lowerPositions, upperPositions.length)
-  
-  const mergedGeometry = new THREE.BufferGeometry()
-  mergedGeometry.setAttribute('position', new THREE.BufferAttribute(combinedPositions, 3))
-  
-  // Combine indices with offset for second cone
-  const upperIndices = Array.from(upperCone.index?.array || [])
-  const lowerIndices = Array.from(lowerCone.index?.array || []).map(i => i + (upperPositions.length / 3))
-  const combinedIndices = [...upperIndices, ...lowerIndices]
-  
-  mergedGeometry.setIndex(combinedIndices)
-  mergedGeometry.computeVertexNormals()
-  
-  return mergedGeometry
+  if (doubleCone === 0) {
+    // Single cone (upward)
+    const cone = new THREE.ConeGeometry(a, zRange, radialSegments, 1, true)
+    cone.translate(0, zRange/2, 0)
+    return cone
+  } else {
+    // Double cone (traditional mathematical cone)
+    // Create upper cone
+    const upperCone = new THREE.ConeGeometry(a, zRange, radialSegments, 1, true)
+    upperCone.translate(0, zRange/2, 0)
+    
+    // Create lower cone (inverted)
+    const lowerCone = new THREE.ConeGeometry(a, zRange, radialSegments, 1, true)
+    lowerCone.translate(0, -zRange/2, 0)
+    lowerCone.rotateX(Math.PI) // Flip upside down
+    
+    // Merge the two cones manually
+    const upperPositions = upperCone.attributes.position.array as Float32Array
+    const lowerPositions = lowerCone.attributes.position.array as Float32Array
+    
+    // Combine positions
+    const combinedPositions = new Float32Array(upperPositions.length + lowerPositions.length)
+    combinedPositions.set(upperPositions, 0)
+    combinedPositions.set(lowerPositions, upperPositions.length)
+    
+    const mergedGeometry = new THREE.BufferGeometry()
+    mergedGeometry.setAttribute('position', new THREE.BufferAttribute(combinedPositions, 3))
+    
+    // Combine indices with offset for second cone
+    const upperIndices = Array.from(upperCone.index?.array || [])
+    const lowerIndices = Array.from(lowerCone.index?.array || []).map(i => i + (upperPositions.length / 3))
+    const combinedIndices = [...upperIndices, ...lowerIndices]
+    
+    mergedGeometry.setIndex(combinedIndices)
+    mergedGeometry.computeVertexNormals()
+    
+    return mergedGeometry
+  }
 }
 
 function createHyperboloidTwoSheetsGeometry(controlValues: Record<string, number> = {}): THREE.BufferGeometry {
@@ -568,20 +587,32 @@ function calculateSurfaceZ(graph: Graph, x: number, y: number, controlValues: Re
   // Handle parametric surfaces (u,v parameterization)
   if (graph.name === 'Helicoid') {
     // Right-handed helicoid: x = u*cos(v), y = u*sin(v), z = c*v
-    // Given (x,y), find (u,v) and return z
+    // Given (x,y), find (u,v) and return z with range controls
     const c = controlValues.c || 1.0  // Use pitch from controls
-    const v = Math.atan2(y, x)
-    // Ensure right-handed orientation with positive c
-    return c * v
+    const uRange = controlValues.uRange || 3 // Radius range
+    const vRange = controlValues.vRange || 2 * Math.PI // Angle range
+    
+    // Map x,y plane to u,v parameters
+    const r = Math.sqrt(x*x + y*y)
+    const v = Math.atan2(y, x) * (vRange / (2 * Math.PI))
+    
+    // Only show surface within u range
+    if (r <= uRange) {
+      return c * v
+    } else {
+      return NaN // Outside surface
+    }
   }
   
   if (graph.name === 'Enneper Surface') {
     // This is complex - let's create a simpler approximation
     // x=u-u^3/3+uv^2, y=v-v^3/3+vu^2, z=u^2-v^2
-    // Use x and y as approximations for u and v
+    // Use x and y as approximations for u and v with range controls
     const scale = controlValues.scale || 0.5
-    const u = x * scale
-    const v = y * scale
+    const uRange = controlValues.uRange || 2
+    const vRange = controlValues.vRange || 2
+    const u = (x * scale) * (uRange / 2)
+    const v = (y * scale) * (vRange / 2)
     return u*u - v*v
   }
   
@@ -649,8 +680,12 @@ function calculateSurfaceZ(graph: Graph, x: number, y: number, controlValues: Re
   }
   
   if (graph.name === 'Sine Wave Surface') {
-    // z = sin(x) + cos(y)
-    return Math.sin(x) + Math.cos(y)
+    // z = A1*sin(f1*x) + A2*cos(f2*y)
+    const xAmplitude = controlValues.xAmplitude || 1
+    const xFrequency = controlValues.xFrequency || 1
+    const yAmplitude = controlValues.yAmplitude || 1
+    const yFrequency = controlValues.yFrequency || 1
+    return xAmplitude * Math.sin(xFrequency * x) + yAmplitude * Math.cos(yFrequency * y)
   }
   
   if (graph.name === 'Gaussian (Bell Curve) Surface') {
@@ -672,9 +707,9 @@ function calculateSurfaceZ(graph: Graph, x: number, y: number, controlValues: Re
   if (graph.name === 'Wave Function (Quantum Mechanics)') {
     // Show actual wave oscillations rather than just |Ψ|²
     // This shows the real part of a quantum wave function with spatial oscillations
-    const waveLength = 2 // Spatial wavelength
-    const amplitude = 1.5 // Wave amplitude
-    const envelope = 3 // Gaussian envelope width
+    const waveLength = controlValues.waveLength || 2 // Spatial wavelength from controls
+    const amplitude = controlValues.amplitude || 1.5 // Wave amplitude from controls
+    const envelope = controlValues.envelope || 3 // Gaussian envelope width from controls
     
     // Wave function: Ψ(x,y) = A * exp(-(x²+y²)/σ²) * cos(2π*√(x²+y²)/λ)
     const r = Math.sqrt(x*x + y*y) // Radial distance
@@ -725,29 +760,47 @@ function calculateSurfaceZ(graph: Graph, x: number, y: number, controlValues: Re
 function calculate2DFunction(graph: Graph, x: number, controlValues: Record<string, number>): number {
   // Handle specific problematic functions
   if (graph.name === 'Square Root Function') {
-    return x >= 0 ? Math.sqrt(x) : 0
+    const xScale = controlValues.xScale || 1
+    const yScale = controlValues.yScale || 1
+    const xTranslation = controlValues.xTranslation || 0
+    const yTranslation = controlValues.yTranslation || 0
+    const scaledX = (x - xTranslation) / xScale
+    return scaledX >= 0 ? yScale * Math.sqrt(scaledX) + yTranslation : 0
   }
   
   if (graph.name === 'Absolute Value Function') {
-    return Math.abs(x)
+    const xScale = controlValues.xScale || 1
+    const yScale = controlValues.yScale || 1
+    const xTranslation = controlValues.xTranslation || 0
+    const yTranslation = controlValues.yTranslation || 0
+    const scaledX = (x - xTranslation) / xScale
+    return yScale * Math.abs(scaledX) + yTranslation
   }
   
   if (graph.name === 'Reciprocal Function (Hyperbola)') {
-    return x !== 0 ? 1/x : 0
+    const xScale = controlValues.xScale || 1
+    const yScale = controlValues.yScale || 1
+    const scaledX = x / xScale
+    return scaledX !== 0 ? yScale / scaledX : 0
   }
   
   if (graph.name === 'Tangent Function') {
     // Handle tangent function with proper asymptotes at π/2, 3π/2, etc.
+    const amplitude = controlValues.amplitude || 1
+    const frequency = controlValues.frequency || 1
+    const phase = controlValues.phase || 0
+    const scaledX = frequency * x + phase
+    
     // Check if we're near an asymptote (where cos(x) ≈ 0)
     const tolerance = 0.01
-    const cosValue = Math.cos(x)
+    const cosValue = Math.cos(scaledX)
     
     if (Math.abs(cosValue) < tolerance) {
       // Near asymptote - return NaN to create discontinuity
       return NaN
     }
     
-    const tanValue = Math.tan(x)
+    const tanValue = amplitude * Math.tan(scaledX)
     
     // Clamp extreme values near asymptotes for better visualization
     if (!isFinite(tanValue) || Math.abs(tanValue) > 100) {
@@ -758,7 +811,11 @@ function calculate2DFunction(graph: Graph, x: number, controlValues: Record<stri
   }
   
   if (graph.name === 'Logarithmic Function') {
-    return x > 0 ? Math.log(x) : 0
+    const base = controlValues.base || Math.E
+    const xScale = controlValues.xScale || 1
+    const yScale = controlValues.yScale || 1
+    const scaledX = x / xScale
+    return scaledX > 0 ? yScale * Math.log(scaledX) / Math.log(base) : 0
   }
   
   if (graph.name === 'Sine and Cosine Waves') {
@@ -803,7 +860,7 @@ function calculate2DFunction(graph: Graph, x: number, controlValues: Record<stri
   
   if (graph.name === 'Pressure vs. Volume (Boyle\'s Law)') {
     // P ∝ 1/V (hyperbolic)
-    const constant = controlValues.constant || controlValues.proportionalityConstant || 5
+    const constant = controlValues.k || controlValues.constant || 5
     return x !== 0 ? constant/x : 0
   }
   
@@ -842,9 +899,11 @@ function calculate2DFunction(graph: Graph, x: number, controlValues: Record<stri
   }
   
   if (graph.name === 'Blackbody Radiation Spectrum') {
-    // Planck's law approximation
-    const lambda = Math.abs(x) + 0.5
-    return 1 / (Math.pow(lambda, 5) * (Math.exp(1/lambda) - 1))
+    // Planck's law: B(λ,T) = 2hc²/λ⁵ * 1/(e^(hc/λkT) - 1)
+    const T = controlValues.T || 300 // Temperature in Kelvin
+    const lambda = Math.abs(x) + 0.5 // Wavelength
+    const hc_kT = 14387.7 / T // Wien's displacement constant approximation
+    return 1 / (Math.pow(lambda, 5) * (Math.exp(hc_kT/lambda) - 1))
   }
   
   if (graph.name === 'Photoelectric Effect') {
@@ -854,9 +913,12 @@ function calculate2DFunction(graph: Graph, x: number, controlValues: Record<stri
   }
   
   if (graph.name === 'Binding Energy per Nucleon') {
-    // Bell curve peaking at Iron-56
+    // Bell curve peaking at Iron-56 (configurable)
     const A = Math.abs(x)
-    return 8.5 - Math.pow((A - 56)/30, 2)
+    const peakMass = controlValues.peakMass || 56
+    const peakEnergy = controlValues.peakEnergy || 8.5
+    const width = controlValues.width || 30
+    return peakEnergy - Math.pow((A - peakMass)/width, 2)
   }
   
   if (graph.name.includes('Simple Harmonic Motion')) {
@@ -872,6 +934,18 @@ function calculate2DFunction(graph: Graph, x: number, controlValues: Record<stri
     const omega = controlValues.omega || controlValues.angularFrequency || 1
     const phi = controlValues.phi || controlValues.phaseAngle || 0
     return A * Math.exp(-gamma * x) * Math.cos(omega * x + phi)
+  }
+  
+  if (graph.name === 'Witch of Agnesi') {
+    // y = 8a³/(x² + 4a²) with scaling and translation
+    const a = controlValues.a || 1
+    const xScale = controlValues.xScale || 1
+    const yScale = controlValues.yScale || 1
+    const xTranslation = controlValues.xTranslation || 0
+    const yTranslation = controlValues.yTranslation || 0
+    const scaledX = (x - xTranslation) / xScale
+    const result = (8 * a * a * a) / (scaledX * scaledX + 4 * a * a)
+    return yScale * result + yTranslation
   }
   
   // Try to evaluate the LaTeX equation
@@ -1002,7 +1076,7 @@ function calculateParametric2D(graph: Graph, t: number, controlValues: Record<st
   return { x: t, y: Math.sin(t) }
 }
 
-function calculateParametric3D(graph: Graph, t: number): { x: number, y: number, z: number } {
+function calculateParametric3D(graph: Graph, t: number, controlValues: Record<string, number> = {}): { x: number, y: number, z: number } {
   // Parse 3D parametric equations from LaTeX
   const equations = graph.equation_latex.split(',').map(eq => eq.trim())
   const scope = { 
@@ -1032,12 +1106,28 @@ function calculateParametric3D(graph: Graph, t: number): { x: number, y: number,
     console.warn(`Error parsing 3D parametric equation for ${graph.name}:`, error)
   }
   
-  // Fallback for specific known shapes
+  // Fallback for specific known shapes with controls
   if (graph.name === 'Trefoil Knot') {
+    // Use controls from the graph controls
+    const scope = { 
+      t, 
+      a: 2, b: 1, c: 1, r: 2, R: controlValues.R || 2,
+      A: 1, B: 1, n: controlValues.n || 3
+    }
     return {
-      x: (2 + Math.cos(3 * t)) * Math.cos(2 * t),
-      y: (2 + Math.cos(3 * t)) * Math.sin(2 * t),
-      z: Math.sin(3 * t)
+      x: (scope.R + Math.cos(scope.n * t)) * Math.cos(2 * t),
+      y: (scope.R + Math.cos(scope.n * t)) * Math.sin(2 * t),
+      z: Math.sin(scope.n * t)
+    }
+  }
+  
+  if (graph.name === 'Viviani\'s Curve') {
+    // x = a(1+cos(t)), y = a*sin(t), z = 2a*sin(t/2)
+    const a = controlValues.a || 2
+    return {
+      x: a * (1 + Math.cos(t)),
+      y: a * Math.sin(t),
+      z: 2 * a * Math.sin(t / 2)
     }
   }
   return { x: Math.cos(t), y: Math.sin(t), z: t / 5 }

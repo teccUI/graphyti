@@ -5,6 +5,8 @@
     "name": "Paraboloid",
     "controls": [
       { "name": "resolution", "label": "Resolution", "defaultValue": 50, "min": 10, "max": 100, "step": 1 },
+      { "name": "a", "label": "a (X-axis scaling)", "defaultValue": 2, "min": 0.1, "max": 10, "step": 0.1 },
+      { "name": "b", "label": "b (Y-axis scaling)", "defaultValue": 2, "min": 0.1, "max": 10, "step": 0.1 },
       { "name": "scale", "label": "Scale", "defaultValue": 8, "min": 1, "max": 20, "step": 0.5 }
     ]
   },
@@ -13,6 +15,8 @@
     "name": "Hyperbolic Paraboloid",
     "controls": [
       { "name": "resolution", "label": "Resolution", "defaultValue": 50, "min": 10, "max": 100, "step": 1 },
+      { "name": "a", "label": "a (X-axis scaling)", "defaultValue": 2, "min": 0.1, "max": 10, "step": 0.1 },
+      { "name": "b", "label": "b (Y-axis scaling)", "defaultValue": 2, "min": 0.1, "max": 10, "step": 0.1 },
       { "name": "scale", "label": "Scale", "defaultValue": 8, "min": 1, "max": 20, "step": 0.5 }
     ]
   },
@@ -33,7 +37,8 @@
       { "name": "resolution", "label": "Resolution", "defaultValue": 30, "min": 10, "max": 100, "step": 1 },
       { "name": "a", "label": "X-axis scale", "defaultValue": 2, "min": 0.5, "max": 10, "step": 0.1 },
       { "name": "c", "label": "Z-axis scale", "defaultValue": 2, "min": 0.5, "max": 10, "step": 0.1 },
-      { "name": "zRange", "label": "Z-axis Range", "defaultValue": 4, "min": 1, "max": 10, "step": 0.5 }
+      { "name": "zRange", "label": "Z-axis Range", "defaultValue": 4, "min": 1, "max": 10, "step": 0.5 },
+      { "name": "doubleCone", "label": "Double Cone", "defaultValue": 1, "min": 0, "max": 1, "step": 1 }
     ]
   },
   {
@@ -80,14 +85,20 @@
     "name": "Helicoid",
     "controls": [
       { "name": "resolution", "label": "Resolution", "defaultValue": 50, "min": 10, "max": 100, "step": 1 },
-      { "name": "c", "label": "Pitch", "defaultValue": 1.0, "min": 0.1, "max": 5, "step": 0.1 }
+      { "name": "c", "label": "Pitch", "defaultValue": 1.0, "min": 0.1, "max": 5, "step": 0.1 },
+      { "name": "uRange", "label": "u Range (radius)", "defaultValue": 3, "min": 1, "max": 10, "step": 0.5 },
+      { "name": "vRange", "label": "v Range (angle)", "defaultValue": 6.28, "min": 3.14, "max": 12.56, "step": 0.1 }
     ]
   },
   {
     "id": "graph_010",
     "name": "Sine Wave Surface",
     "controls": [
-      { "name": "resolution", "label": "Resolution", "defaultValue": 50, "min": 10, "max": 100, "step": 1 }
+      { "name": "resolution", "label": "Resolution", "defaultValue": 50, "min": 10, "max": 100, "step": 1 },
+      { "name": "xAmplitude", "label": "X Amplitude", "defaultValue": 1, "min": 0.1, "max": 5, "step": 0.1 },
+      { "name": "xFrequency", "label": "X Frequency", "defaultValue": 1, "min": 0.1, "max": 10, "step": 0.1 },
+      { "name": "yAmplitude", "label": "Y Amplitude", "defaultValue": 1, "min": 0.1, "max": 5, "step": 0.1 },
+      { "name": "yFrequency", "label": "Y Frequency", "defaultValue": 1, "min": 0.1, "max": 10, "step": 0.1 }
     ]
   },
   {
@@ -151,21 +162,31 @@
     "id": "graph_017",
     "name": "Square Root Function",
     "controls": [
-      { "name": "resolution", "label": "Resolution", "defaultValue": 50, "min": 10, "max": 200, "step": 1 }
+      { "name": "resolution", "label": "Resolution", "defaultValue": 50, "min": 10, "max": 200, "step": 1 },
+      { "name": "xScale", "label": "X Scaling", "defaultValue": 1, "min": 0.1, "max": 5, "step": 0.1 },
+      { "name": "yScale", "label": "Y Scaling", "defaultValue": 1, "min": 0.1, "max": 5, "step": 0.1 },
+      { "name": "xTranslation", "label": "X Translation", "defaultValue": 0, "min": -10, "max": 10, "step": 0.5 },
+      { "name": "yTranslation", "label": "Y Translation", "defaultValue": 0, "min": -10, "max": 10, "step": 0.5 }
     ]
   },
   {
     "id": "graph_018",
     "name": "Absolute Value Function",
     "controls": [
-      { "name": "resolution", "label": "Resolution", "defaultValue": 50, "min": 10, "max": 200, "step": 1 }
+      { "name": "resolution", "label": "Resolution", "defaultValue": 50, "min": 10, "max": 200, "step": 1 },
+      { "name": "xScale", "label": "X Scaling", "defaultValue": 1, "min": 0.1, "max": 5, "step": 0.1 },
+      { "name": "yScale", "label": "Y Scaling", "defaultValue": 1, "min": 0.1, "max": 5, "step": 0.1 },
+      { "name": "xTranslation", "label": "X Translation", "defaultValue": 0, "min": -10, "max": 10, "step": 0.5 },
+      { "name": "yTranslation", "label": "Y Translation", "defaultValue": 0, "min": -10, "max": 10, "step": 0.5 }
     ]
   },
   {
     "id": "graph_019",
     "name": "Reciprocal Function (Hyperbola)",
     "controls": [
-      { "name": "resolution", "label": "Resolution", "defaultValue": 50, "min": 10, "max": 200, "step": 1 }
+      { "name": "resolution", "label": "Resolution", "defaultValue": 50, "min": 10, "max": 200, "step": 1 },
+      { "name": "xScale", "label": "X Scaling", "defaultValue": 1, "min": 0.1, "max": 5, "step": 0.1 },
+      { "name": "yScale", "label": "Y Scaling", "defaultValue": 1, "min": 0.1, "max": 5, "step": 0.1 }
     ]
   },
   {
@@ -183,7 +204,10 @@
     "id": "graph_021",
     "name": "Tangent Function",
     "controls": [
-      { "name": "resolution", "label": "Resolution", "defaultValue": 50, "min": 10, "max": 200, "step": 1 }
+      { "name": "resolution", "label": "Resolution", "defaultValue": 50, "min": 10, "max": 200, "step": 1 },
+      { "name": "amplitude", "label": "Amplitude", "defaultValue": 1, "min": 0.1, "max": 5, "step": 0.1 },
+      { "name": "frequency", "label": "Frequency", "defaultValue": 1, "min": 0.1, "max": 5, "step": 0.1 },
+      { "name": "phase", "label": "Phase", "defaultValue": 0, "min": -3.14, "max": 3.14, "step": 0.1 }
     ]
   },
   {
@@ -199,7 +223,10 @@
     "id": "graph_023",
     "name": "Logarithmic Function",
     "controls": [
-      { "name": "resolution", "label": "Resolution", "defaultValue": 50, "min": 10, "max": 200, "step": 1 }
+      { "name": "resolution", "label": "Resolution", "defaultValue": 50, "min": 10, "max": 200, "step": 1 },
+      { "name": "base", "label": "Base", "defaultValue": 2.718, "min": 1.1, "max": 10, "step": 0.1 },
+      { "name": "xScale", "label": "X Scaling", "defaultValue": 1, "min": 0.1, "max": 5, "step": 0.1 },
+      { "name": "yScale", "label": "Y Scaling", "defaultValue": 1, "min": 0.1, "max": 5, "step": 0.1 }
     ]
   },
   {
@@ -207,7 +234,9 @@
     "name": "Circle",
     "controls": [
       { "name": "resolution", "label": "Resolution", "defaultValue": 50, "min": 10, "max": 200, "step": 1 },
-      { "name": "r", "label": "Radius", "defaultValue": 3, "min": 0.5, "max": 10, "step": 0.1 }
+      { "name": "r", "label": "Radius", "defaultValue": 3, "min": 0.5, "max": 10, "step": 0.1 },
+      { "name": "tMin", "label": "t Min", "defaultValue": 0, "min": 0, "max": 6.28, "step": 0.1 },
+      { "name": "tMax", "label": "t Max", "defaultValue": 6.28, "min": 0, "max": 12.56, "step": 0.1 }
     ]
   },
   {
@@ -343,7 +372,10 @@
     "id": "graph_040",
     "name": "Binding Energy per Nucleon",
     "controls": [
-      { "name": "resolution", "label": "Resolution", "defaultValue": 50, "min": 10, "max": 200, "step": 1 }
+      { "name": "resolution", "label": "Resolution", "defaultValue": 50, "min": 10, "max": 200, "step": 1 },
+      { "name": "peakMass", "label": "Peak Mass Number", "defaultValue": 56, "min": 20, "max": 100, "step": 1 },
+      { "name": "peakEnergy", "label": "Peak Energy (MeV)", "defaultValue": 8.5, "min": 5, "max": 12, "step": 0.1 },
+      { "name": "width", "label": "Curve Width", "defaultValue": 30, "min": 10, "max": 60, "step": 5 }
     ]
   },
   {
@@ -415,7 +447,11 @@
     "name": "Witch of Agnesi",
     "controls": [
       { "name": "resolution", "label": "Resolution", "defaultValue": 50, "min": 10, "max": 200, "step": 1 },
-      { "name": "a", "label": "a", "defaultValue": 1, "min": 0.1, "max": 5, "step": 0.1 }
+      { "name": "a", "label": "a (parameter)", "defaultValue": 1, "min": 0.1, "max": 5, "step": 0.1 },
+      { "name": "xScale", "label": "X Scaling", "defaultValue": 1, "min": 0.1, "max": 5, "step": 0.1 },
+      { "name": "yScale", "label": "Y Scaling", "defaultValue": 1, "min": 0.1, "max": 5, "step": 0.1 },
+      { "name": "xTranslation", "label": "X Translation", "defaultValue": 0, "min": -10, "max": 10, "step": 0.5 },
+      { "name": "yTranslation", "label": "Y Translation", "defaultValue": 0, "min": -10, "max": 10, "step": 0.5 }
     ]
   },
   {
@@ -423,7 +459,9 @@
     "name": "Viviani's Curve",
     "controls": [
       { "name": "resolution", "label": "Resolution", "defaultValue": 50, "min": 10, "max": 200, "step": 1 },
-      { "name": "a", "label": "Scale", "defaultValue": 2, "min": 0.1, "max": 5, "step": 0.1 }
+      { "name": "a", "label": "a (sphere radius)", "defaultValue": 2, "min": 0.1, "max": 5, "step": 0.1 },
+      { "name": "tMin", "label": "t Min", "defaultValue": 0, "min": 0, "max": 6.28, "step": 0.1 },
+      { "name": "tMax", "label": "t Max", "defaultValue": 12.56, "min": 6.28, "max": 25.12, "step": 0.1 }
     ]
   },
   {
@@ -431,7 +469,9 @@
     "name": "Enneper Surface",
     "controls": [
       { "name": "resolution", "label": "Resolution", "defaultValue": 50, "min": 10, "max": 100, "step": 1 },
-      { "name": "scale", "label": "Scale", "defaultValue": 0.5, "min": 0.1, "max": 2, "step": 0.05 }
+      { "name": "scale", "label": "Scale", "defaultValue": 0.5, "min": 0.1, "max": 2, "step": 0.05 },
+      { "name": "uRange", "label": "u Range", "defaultValue": 2, "min": 0.5, "max": 5, "step": 0.1 },
+      { "name": "vRange", "label": "v Range", "defaultValue": 2, "min": 0.5, "max": 5, "step": 0.1 }
     ]
   }
 ]
