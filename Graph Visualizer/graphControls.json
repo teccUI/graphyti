@@ -349,7 +349,10 @@
     "name": "I-V Characteristic of a Diode",
     "controls": [
       { "name": "resolution", "label": "Resolution", "defaultValue": 50, "min": 10, "max": 200, "step": 1 },
-      { "name": "V_T", "label": "Thermal Voltage", "defaultValue": 0.026, "min": 0.01, "max": 0.1, "step": 0.001 }
+      { "name": "I_0", "label": "Saturation Current (nA)", "defaultValue": 100, "min": 1, "max": 1000, "step": 10 },
+      { "name": "n", "label": "Ideality Factor", "defaultValue": 1.2, "min": 1.0, "max": 2.0, "step": 0.1 },
+      { "name": "T", "label": "Temperature (K)", "defaultValue": 300, "min": 250, "max": 400, "step": 10 },
+      { "name": "V_breakdown", "label": "Breakdown Voltage (V)", "defaultValue": -2, "min": -3, "max": -0.5, "step": 0.1 }
     ]
   },
   {
@@ -439,7 +442,10 @@
     "name": "Lemniscate of Bernoulli",
     "controls": [
       { "name": "resolution", "label": "Resolution", "defaultValue": 50, "min": 10, "max": 200, "step": 1 },
-      { "name": "a", "label": "Scale", "defaultValue": 2, "min": 0.1, "max": 5, "step": 0.1 }
+      { "name": "a", "label": "Scale", "defaultValue": 2, "min": 0.1, "max": 5, "step": 0.1 },
+      { "name": "rotation", "label": "Rotation (°)", "defaultValue": 0, "min": 0, "max": 180, "step": 15 },
+      { "name": "xOffset", "label": "X Offset", "defaultValue": 0, "min": -5, "max": 5, "step": 0.5 },
+      { "name": "yOffset", "label": "Y Offset", "defaultValue": 0, "min": -5, "max": 5, "step": 0.5 }
     ]
   },
   {

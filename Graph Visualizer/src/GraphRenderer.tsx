@@ -262,8 +262,8 @@ function createPolarGeometry(graph: Graph, resolution: number, controlValues: Re
       try {
         const r = calculatePolar(graph, theta, controlValues)
         if (r > 0) { // Only add points with positive radius
-          const x = r * Math.cos(theta)
-          const y = r * Math.sin(theta)
+          const x = r * Math.cos(theta) + (controlValues.xOffset || 0)
+          const y = r * Math.sin(theta) + (controlValues.yOffset || 0)
           points.push(new THREE.Vector2(x, y))
         }
       } catch {
@@ -291,8 +291,8 @@ function createPolarGeometry(graph: Graph, resolution: number, controlValues: Re
       try {
         const r = calculatePolar(graph, theta, controlValues)
         if (r > 0) { // Only add points with positive radius
-          const x = r * Math.cos(theta)
-          const y = r * Math.sin(theta)
+          const x = r * Math.cos(theta) + (controlValues.xOffset || 0)
+          const y = r * Math.sin(theta) + (controlValues.yOffset || 0)
           points.push(new THREE.Vector3(x, y, 0))
         }
       } catch {
@@ -780,6 +780,10 @@ function mapCoordinateToGraphDomain(x: number, graphName: string, controlValues:
       // Map x(-10 to +10) to temperature (-300°C to +500°C, practical range)
       return -300 + ((x + 10) / 20) * 800
     
+    case 'I-V Characteristic of a Diode':
+      // Map x(-10 to +10) to voltage (-3V to +1V, includes breakdown region)
+      return -3 + ((x + 10) / 20) * 4
+    
     default:
       // For most mathematical functions, keep the standard -10 to +10 range
       return x
@@ -928,9 +932,65 @@ function calculate2DFunction(graph: Graph, x: number, controlValues: Record<stri
   }
   
   if (graph.name === 'I-V Characteristic of a Diode') {
-    // I = I₀(e^(V/Vₜ) - 1) (exponential)
-    const V_T = controlValues.V_T || controlValues.thermalVoltage || 0.026
-    return x > 0 ? Math.exp(x / V_T) - 1 : 0
+    // Shockley diode equation: I = I₀(e^(V/nVₜ) - 1)
+    // Map visual coordinate to voltage domain
+    const V = mapCoordinateToGraphDomain(x, graph.name, controlValues) // Voltage in volts
+    
+    // Physical parameters from controls
+    const I_0_nA = controlValues.I_0 || 100 // Saturation current in nanoamps
+    const n = controlValues.n || 1.2 // Ideality factor
+    const T = controlValues.T || 300 // Temperature in Kelvin
+    const V_breakdown = controlValues.V_breakdown || -10 // Breakdown voltage
+    
+    // Calculate thermal voltage: V_T = kT/q
+    const k = 1.381e-23 // Boltzmann constant (J/K)
+    const q = 1.602e-19 // Elementary charge (C)
+    const V_T = (k * T) / q // Thermal voltage in volts (≈26mV at 300K)
+    
+    // Convert I_0 from nanoamps to amps for calculation
+    const I_0 = I_0_nA * 1e-9
+    
+    let current = 0
+    
+    if (V < V_breakdown) {
+      // Reverse breakdown region - exponential current increase
+      const breakdownDepth = Math.abs(V - V_breakdown)
+      current = -I_0 * Math.exp(breakdownDepth * 15) // Steep breakdown characteristic
+    } else if (V < 0) {
+      // Normal reverse bias - small reverse current
+      current = -I_0
+    } else {
+      // Forward bias operation: I = I₀(e^(V/nVₜ) - 1)
+      // Use more conservative exponential limiting for better parameter sensitivity
+      const exponentialArg = V / (n * V_T)
+      if (exponentialArg > 25) {
+        // For very large arguments, use linear approximation to preserve scaling
+        current = I_0 * Math.exp(25) * exponentialArg / 25
+      } else {
+        current = I_0 * (Math.exp(exponentialArg) - 1)
+      }
+    }
+    
+    // Logarithmic scaling for better parameter visibility
+    // Convert current to a logarithmic scale for visualization
+    if (current > 0) {
+      // Forward current: use log scaling to show exponential behavior
+      const logCurrent = Math.log10(current * 1e9 + 1) // Convert to nA and add 1 to avoid log(0)
+      return Math.min(10, logCurrent) // Scale to 0-10 range
+    } else if (current < 0) {
+      // Reverse current: logarithmic scaling to show breakdown effects
+      const reverseCurrent_nA = Math.abs(current * 1e9) // Convert to positive nA
+      if (reverseCurrent_nA > I_0_nA * 2) {
+        // In breakdown region - use logarithmic scaling
+        const logReverseCurrent = Math.log10(reverseCurrent_nA + 1)
+        return -Math.min(10, logReverseCurrent) // Negative values for reverse current
+      } else {
+        // Normal reverse bias - linear scaling
+        return Math.max(-10, -(reverseCurrent_nA / (I_0_nA / 2)))
+      }
+    } else {
+      return 0
+    }
   }
   
   if (graph.name === 'Blackbody Radiation Spectrum') {
@@ -1175,9 +1235,12 @@ function calculateParametric3D(graph: Graph, t: number, controlValues: Record<st
 function calculatePolar(graph: Graph, theta: number, controlValues: Record<string, number> = {}): number {
   // Handle specific problematic polar equations
   if (graph.name === 'Lemniscate of Bernoulli') {
-    // r^2 = a^2 * cos(2*theta) -> r = a * sqrt(cos(2*theta))
+    // r^2 = a^2 * cos(2*(theta - alpha)) -> r = a * sqrt(cos(2*(theta - alpha)))
+    // Where alpha is the rotation angle in radians
     const a = controlValues.a || 2
-    const cos2theta = Math.cos(2 * theta)
+    const rotationDegrees = controlValues.rotation || 0
+    const alpha = (rotationDegrees * Math.PI) / 180 // Convert degrees to radians
+    const cos2theta = Math.cos(2 * (theta - alpha))
     return cos2theta >= 0 ? a * Math.sqrt(cos2theta) : 0
   }
   
