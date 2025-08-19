@@ -18,7 +18,30 @@ interface Graph {
 }
 
 function App() {
-  const [selectedGraph, setSelectedGraph] = useState<Graph | null>(graphList[0] as Graph)
+  // Create unified ordered list that matches dropdown display order
+  const getOrderedGraphList = (): Graph[] => {
+    const conceptually2DCurves = ['Viviani\'s Curve', 'Trefoil Knot'] // 3D parametric curves that are conceptually 2D-like
+    
+    const is2D = (graph: Graph) => 
+      graph.type.includes('2D Function') || 
+      graph.type.includes('2D Parametric') || 
+      graph.type.includes('2D Polar') ||
+      (graph.type === '3D Parametric Curve' && conceptually2DCurves.includes(graph.name))
+      
+    const is3D = (graph: Graph) => 
+      graph.type.includes('3D Surface') || 
+      graph.type === '2D Function/3D Surface' ||
+      (graph.type === '3D Parametric Curve' && !conceptually2DCurves.includes(graph.name))
+    
+    const graphs2D = graphList.filter(graph => is2D(graph)).sort((a, b) => a.name.localeCompare(b.name))
+    const graphs3D = graphList.filter(graph => is3D(graph)).sort((a, b) => a.name.localeCompare(b.name))
+    
+    return [...graphs2D, ...graphs3D]
+  }
+
+  const orderedGraphs = getOrderedGraphList()
+  
+  const [selectedGraph, setSelectedGraph] = useState<Graph | null>(orderedGraphs[0] as Graph)
   const [controlValues, setControlValues] = useState<Record<string, number>>({})
 
   useEffect(() => {
@@ -51,13 +74,13 @@ function App() {
   const handlePreviousGraph = () => {
     if (!selectedGraph) return
     
-    const currentIndex = graphList.findIndex(g => g.id === selectedGraph.id)
+    const currentIndex = orderedGraphs.findIndex(g => g.id === selectedGraph.id)
     if (currentIndex > 0) {
-      const previousGraph = graphList[currentIndex - 1]
+      const previousGraph = orderedGraphs[currentIndex - 1]
       setSelectedGraph(previousGraph)
     } else {
       // Wrap to the last graph
-      const lastGraph = graphList[graphList.length - 1]
+      const lastGraph = orderedGraphs[orderedGraphs.length - 1]
       setSelectedGraph(lastGraph)
     }
   }
@@ -65,13 +88,13 @@ function App() {
   const handleNextGraph = () => {
     if (!selectedGraph) return
     
-    const currentIndex = graphList.findIndex(g => g.id === selectedGraph.id)
-    if (currentIndex < graphList.length - 1) {
-      const nextGraph = graphList[currentIndex + 1]
+    const currentIndex = orderedGraphs.findIndex(g => g.id === selectedGraph.id)
+    if (currentIndex < orderedGraphs.length - 1) {
+      const nextGraph = orderedGraphs[currentIndex + 1]
       setSelectedGraph(nextGraph)
     } else {
       // Wrap to the first graph
-      const firstGraph = graphList[0]
+      const firstGraph = orderedGraphs[0]
       setSelectedGraph(firstGraph)
     }
   }

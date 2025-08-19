@@ -757,6 +757,35 @@ function calculateSurfaceZ(graph: Graph, x: number, y: number, controlValues: Re
   }
 }
 
+// Coordinate mapping helper function to map visual coordinates to graph-specific domains
+function mapCoordinateToGraphDomain(x: number, graphName: string, controlValues: Record<string, number> = {}): number {
+  switch (graphName) {
+    case 'Binding Energy per Nucleon':
+      // Map x(-10 to +10) to mass numbers (0 to 240 for comprehensive nuclear range)
+      return ((x + 10) / 20) * 240
+    
+    case 'Blackbody Radiation Spectrum':
+      // Map x(-10 to +10) to wavelength (0.1 to 10 micrometers, typical range)
+      return 0.1 + ((x + 10) / 20) * 9.9
+    
+    case 'Photoelectric Effect': {
+      // Map x(-10 to +10) to frequency (0 to 15 * 10^14 Hz, visible to UV range)
+      const workFunction = controlValues.workFunction || 2
+      // Extend range beyond work function to show threshold behavior
+      return ((x + 10) / 20) * (workFunction + 10)
+    }
+    
+    case 'Volume vs. Temperature (Charles\'s Law)':
+    case 'Pressure vs. Temperature (Gay-Lussac\'s Law)':
+      // Map x(-10 to +10) to temperature (-300°C to +500°C, practical range)
+      return -300 + ((x + 10) / 20) * 800
+    
+    default:
+      // For most mathematical functions, keep the standard -10 to +10 range
+      return x
+  }
+}
+
 function calculate2DFunction(graph: Graph, x: number, controlValues: Record<string, number>): number {
   // Handle specific problematic functions
   if (graph.name === 'Square Root Function') {
@@ -873,8 +902,8 @@ function calculate2DFunction(graph: Graph, x: number, controlValues: Record<stri
   
   if (graph.name === "Volume vs. Temperature (Charles's Law)") {
     // Charles's Law: V ∝ T (absolute temperature in Kelvin)
-    // If x represents temperature in Celsius, convert to Kelvin
-    const temperatureKelvin = x + 273.15 // Convert °C to K
+    const temperatureCelsius = mapCoordinateToGraphDomain(x, graph.name, controlValues) // Map to temperature domain
+    const temperatureKelvin = temperatureCelsius + 273.15 // Convert °C to K
     const k = controlValues.k || controlValues.proportionalityConstant || 0.01 // Proportionality constant (small for reasonable scale)
     
     // Volume should be zero at absolute zero, proportional to T in Kelvin
@@ -883,8 +912,7 @@ function calculate2DFunction(graph: Graph, x: number, controlValues: Record<stri
   
   if (graph.name === "Pressure vs. Temperature (Gay-Lussac's Law)") {
     // Gay-Lussac's Law: P ∝ T (absolute temperature in Kelvin)
-    // For better visualization, treat x-axis as temperature in Celsius from -300 to +200°C
-    const temperatureCelsius = x * 50 // Scale x range to reasonable temperature range  
+    const temperatureCelsius = mapCoordinateToGraphDomain(x, graph.name, controlValues) // Map to temperature domain
     const temperatureKelvin = temperatureCelsius + 273.15 // Convert °C to K
     const k = controlValues.k || controlValues.proportionalityConstant || 0.02 // Proportionality constant (for reasonable pressure scale)
     
@@ -908,23 +936,27 @@ function calculate2DFunction(graph: Graph, x: number, controlValues: Record<stri
   if (graph.name === 'Blackbody Radiation Spectrum') {
     // Planck's law: B(λ,T) = 2hc²/λ⁵ * 1/(e^(hc/λkT) - 1)
     const T = controlValues.T || 300 // Temperature in Kelvin
-    const lambda = Math.abs(x) + 0.5 // Wavelength
+    const lambda = mapCoordinateToGraphDomain(x, graph.name, controlValues) // Wavelength in micrometers
     const hc_kT = 14387.7 / T // Wien's displacement constant approximation
-    return 1 / (Math.pow(lambda, 5) * (Math.exp(hc_kT/lambda) - 1))
+    const intensity = 1 / (Math.pow(lambda, 5) * (Math.exp(hc_kT/lambda) - 1))
+    // Scale the result to be visible (normalize by typical peak value)
+    return intensity * Math.pow(lambda, 4) * 1000 // Scaling factor for visualization
   }
   
   if (graph.name === 'Photoelectric Effect') {
     // K_max = hf - φ (linear with threshold)
     const workFunction = controlValues.phi || controlValues.workFunction || 2
-    return x > workFunction ? x - workFunction : 0
+    const frequency = mapCoordinateToGraphDomain(x, graph.name, controlValues) // Map to frequency domain
+    return frequency > workFunction ? frequency - workFunction : 0
   }
   
   if (graph.name === 'Binding Energy per Nucleon') {
     // Bell curve peaking at Iron-56 (configurable)
-    const A = Math.abs(x)
+    // Map visual x-coordinate to mass number domain
+    const A = mapCoordinateToGraphDomain(x, graph.name, controlValues)
     const peakMass = controlValues.peakMass || 56
     const peakEnergy = controlValues.peakEnergy || 8.5
-    const width = controlValues.width || 30
+    const width = controlValues.width || 25
     return peakEnergy - Math.pow((A - peakMass)/width, 2)
   }
   
