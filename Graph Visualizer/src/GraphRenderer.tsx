@@ -141,7 +141,16 @@ function create2DFunctionGeometry(graph: Graph, resolution: number, controlValue
         currentSegment = []
       } else {
         // Valid point - add to current segment
-        currentSegment.push(new THREE.Vector3(x, y, 0))
+        // Apply Y-axis rotation if specified for Damped Oscillations
+        if (graph.name.includes('Damped Oscillations') && controlValues.yRotation) {
+          const yRotationDegrees = controlValues.yRotation || 0
+          const yRotationRad = (yRotationDegrees * Math.PI) / 180
+          const xRotated = x * Math.cos(yRotationRad)
+          const zRotated = -x * Math.sin(yRotationRad)
+          currentSegment.push(new THREE.Vector3(xRotated, y, zRotated))
+        } else {
+          currentSegment.push(new THREE.Vector3(x, y, 0))
+        }
       }
     } catch {
       // Error encountered - end current segment
@@ -253,12 +262,14 @@ function createPolarGeometry(graph: Graph, resolution: number, controlValues: Re
   if (shouldRenderAsFilled) {
     // Create filled surface using THREE.ShapeGeometry
     const points: THREE.Vector2[] = []
-    const thetaMax = 2 * Math.PI
-    const step = thetaMax / resolution
+    // Use user-controlled theta range for Lemniscate, default for others
+    const thetaMin = (graph.name === 'Lemniscate of Bernoulli') ? (controlValues.thetaMin || 0) : 0
+    const thetaMax = (graph.name === 'Lemniscate of Bernoulli') ? (controlValues.thetaMax || 2 * Math.PI) : 2 * Math.PI
+    const step = (thetaMax - thetaMin) / resolution
     
     // Generate outline points that define the polar shape boundary
     for (let i = 0; i <= resolution; i++) {
-      const theta = i * step
+      const theta = thetaMin + i * step
       try {
         const r = calculatePolar(graph, theta, controlValues)
         if (r > 0) { // Only add points with positive radius
@@ -283,11 +294,13 @@ function createPolarGeometry(graph: Graph, resolution: number, controlValues: Re
   } else {
     // Create line geometry for curves
     const points: THREE.Vector3[] = []
-    const thetaMax = 2 * Math.PI
-    const step = thetaMax / resolution
+    // Use user-controlled theta range for Lemniscate, default for others
+    const thetaMin = (graph.name === 'Lemniscate of Bernoulli') ? (controlValues.thetaMin || 0) : 0
+    const thetaMax = (graph.name === 'Lemniscate of Bernoulli') ? (controlValues.thetaMax || 2 * Math.PI) : 2 * Math.PI
+    const step = (thetaMax - thetaMin) / resolution
     
     for (let i = 0; i <= resolution; i++) {
-      const theta = i * step
+      const theta = thetaMin + i * step
       try {
         const r = calculatePolar(graph, theta, controlValues)
         if (r > 0) { // Only add points with positive radius
@@ -764,9 +777,12 @@ function mapCoordinateToGraphDomain(x: number, graphName: string, controlValues:
       // Map x(-10 to +10) to mass numbers (0 to 240 for comprehensive nuclear range)
       return ((x + 10) / 20) * 240
     
-    case 'Blackbody Radiation Spectrum':
-      // Map x(-10 to +10) to wavelength (0.1 to 10 micrometers, typical range)
-      return 0.1 + ((x + 10) / 20) * 9.9
+    case 'Blackbody Radiation Spectrum': {
+      // Map x(-10 to +10) to wavelength using user-controlled range
+      const lambdaMin = controlValues.lambdaMin || 0.5
+      const lambdaMax = controlValues.lambdaMax || 10.0
+      return lambdaMin + ((x + 10) / 20) * (lambdaMax - lambdaMin)
+    }
     
     case 'Photoelectric Effect': {
       // Map x(-10 to +10) to frequency (0 to 15 * 10^14 Hz, visible to UV range)
@@ -997,10 +1013,11 @@ function calculate2DFunction(graph: Graph, x: number, controlValues: Record<stri
     // Planck's law: B(λ,T) = 2hc²/λ⁵ * 1/(e^(hc/λkT) - 1)
     const T = controlValues.T || 300 // Temperature in Kelvin
     const lambda = mapCoordinateToGraphDomain(x, graph.name, controlValues) // Wavelength in micrometers
+    const scalingFactor = controlValues.scalingFactor || 1000 // User-controlled scaling
     const hc_kT = 14387.7 / T // Wien's displacement constant approximation
     const intensity = 1 / (Math.pow(lambda, 5) * (Math.exp(hc_kT/lambda) - 1))
     // Scale the result to be visible (normalize by typical peak value)
-    return intensity * Math.pow(lambda, 4) * 1000 // Scaling factor for visualization
+    return intensity * Math.pow(lambda, 4) * scalingFactor // Use user-controlled scaling factor
   }
   
   if (graph.name === 'Photoelectric Effect') {
@@ -1035,6 +1052,15 @@ function calculate2DFunction(graph: Graph, x: number, controlValues: Record<stri
     return A * Math.exp(-gamma * x) * Math.cos(omega * x + phi)
   }
   
+  if (graph.name === 'Exponential Growth/Decay') {
+    // y = a * e^(k(x - h)) + v
+    const a = controlValues.a || 1 // Amplitude
+    const k = controlValues.k || 1 // Growth/decay rate
+    const h = controlValues.h || 0 // Horizontal shift
+    const v = controlValues.v || 0 // Vertical shift
+    return a * Math.exp(k * (x - h)) + v
+  }
+
   if (graph.name === 'Witch of Agnesi') {
     // y = 8a³/(x² + 4a²) with scaling and translation
     const a = controlValues.a || 1
@@ -1105,36 +1131,84 @@ function calculateParametric2D(graph: Graph, t: number, controlValues: Record<st
     const a = controlValues.a || controlValues.xFrequency || 3
     const b = controlValues.b || controlValues.yFrequency || 2
     const delta = controlValues.delta || controlValues.phaseShift || Math.PI/4
-    return { 
-      x: A * Math.sin(a * t + delta), 
-      y: B * Math.sin(b * t) 
+    
+    // Calculate base coordinates
+    let x = A * Math.sin(a * t + delta)
+    let y = B * Math.sin(b * t)
+    
+    // Apply rotation if specified
+    const rotation = controlValues.rotation || 0
+    if (rotation !== 0) {
+      const rotationRad = (rotation * Math.PI) / 180
+      const cosRot = Math.cos(rotationRad)
+      const sinRot = Math.sin(rotationRad)
+      const xRotated = x * cosRot - y * sinRot
+      const yRotated = x * sinRot + y * cosRot
+      x = xRotated
+      y = yRotated
     }
+    
+    // Apply translation offsets
+    const xOffset = controlValues.xOffset || 0
+    const yOffset = controlValues.yOffset || 0
+    x += xOffset
+    y += yOffset
+    
+    return { x, y }
   }
   
   if (graph.name === 'Cycloid') {
     // Cycloid: x = r(t - sin(t)), y = r(1 - cos(t))
     const r = controlValues.r || controlValues.radius || 1.5 // Wheel radius
+    const rotationDegrees = controlValues.rotation || 0
+    const alpha = (rotationDegrees * Math.PI) / 180 // Convert degrees to radians
+    const xOffset = controlValues.xOffset || 0
+    const yOffset = controlValues.yOffset || 0
     
+    // Basic cycloid equations
     const x = r * (t - Math.sin(t))
     const y = r * (1 - Math.cos(t))
     
-    // Center the cycloid horizontally for better visualization
-    const archWidth = 2 * Math.PI * r
+    // Apply rotation transformation
+    const xRotated = x * Math.cos(alpha) - y * Math.sin(alpha)
+    const yRotated = x * Math.sin(alpha) + y * Math.cos(alpha)
+    
     return { 
-      x: x - archWidth/2, // Center horizontally
-      y: y - r // Position so cusps are at y=0
+      x: xRotated + xOffset,
+      y: yRotated + yOffset
     }
   }
   
   if (graph.name === 'Circle') {
     const r = controlValues.r || controlValues.radius || 3
-    return { x: r * Math.cos(t), y: r * Math.sin(t) }
+    const xOffset = controlValues.xOffset || 0
+    const yOffset = controlValues.yOffset || 0
+    return { 
+      x: r * Math.cos(t) + xOffset, 
+      y: r * Math.sin(t) + yOffset 
+    }
   }
   
   if (graph.name === 'Ellipse') {
     const a = controlValues.a || controlValues.xRadius || 4
     const b = controlValues.b || controlValues.yRadius || 2
-    return { x: a * Math.cos(t), y: b * Math.sin(t) }
+    const rotationDegrees = controlValues.rotation || 0
+    const alpha = (rotationDegrees * Math.PI) / 180 // Convert degrees to radians
+    const xOffset = controlValues.xOffset || 0
+    const yOffset = controlValues.yOffset || 0
+    
+    // Basic ellipse equations
+    const x = a * Math.cos(t)
+    const y = b * Math.sin(t)
+    
+    // Apply rotation transformation
+    const xRotated = x * Math.cos(alpha) - y * Math.sin(alpha)
+    const yRotated = x * Math.sin(alpha) + y * Math.cos(alpha)
+    
+    return { 
+      x: xRotated + xOffset, 
+      y: yRotated + yOffset 
+    }
   }
   
   // Try to parse parametric equations from LaTeX
@@ -1235,18 +1309,21 @@ function calculateParametric3D(graph: Graph, t: number, controlValues: Record<st
 function calculatePolar(graph: Graph, theta: number, controlValues: Record<string, number> = {}): number {
   // Handle specific problematic polar equations
   if (graph.name === 'Lemniscate of Bernoulli') {
-    // r^2 = a^2 * cos(2*(theta - alpha)) -> r = a * sqrt(cos(2*(theta - alpha)))
-    // Where alpha is the rotation angle in radians
+    // r^2 = a^2 * cos(n*(theta - alpha)) -> r = a * sqrt(cos(n*(theta - alpha)))
+    // Where alpha is the rotation angle in radians and n is the curve parameter
     const a = controlValues.a || 2
+    const n = controlValues.n || 2 // Curve parameter (2 = classic lemniscate)
     const rotationDegrees = controlValues.rotation || 0
     const alpha = (rotationDegrees * Math.PI) / 180 // Convert degrees to radians
-    const cos2theta = Math.cos(2 * (theta - alpha))
-    return cos2theta >= 0 ? a * Math.sqrt(cos2theta) : 0
+    const cosNtheta = Math.cos(n * (theta - alpha))
+    return cosNtheta >= 0 ? a * Math.sqrt(cosNtheta) : 0
   }
   
   if (graph.name === 'Cardioid') {
     const a = controlValues.a || 2
-    return a * (1 - Math.cos(theta))
+    const rotationDegrees = controlValues.rotation || 0
+    const alpha = (rotationDegrees * Math.PI) / 180 // Convert degrees to radians
+    return a * (1 - Math.cos(theta - alpha))
   }
   
   if (graph.name === 'Rose Curve') {

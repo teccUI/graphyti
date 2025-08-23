@@ -16,6 +16,37 @@ interface GraphControlsProps {
 }
 
 const GraphControls = ({ controls, values, onValueChange }: GraphControlsProps) => {
+  const shouldEnableScrolling = controls.length > 7
+  
+  const scrollableStyles = {
+    display: 'flex',
+    flexDirection: 'column',
+    maxHeight: '480px',
+    overflowY: 'auto',
+    paddingRight: '8px',
+    marginTop: '24px',
+    '&::-webkit-scrollbar': {
+      width: '4px',
+    },
+    '&::-webkit-scrollbar-track': {
+      backgroundColor: '#f5f5f5',
+      borderRadius: '99px',
+    },
+    '&::-webkit-scrollbar-thumb': {
+      backgroundColor: '#dfdfdf',
+      borderRadius: '99px',
+      // minHeight: '100px',
+      '&:hover': {
+        backgroundColor: '#bfbfbf',
+      },
+    },
+  }
+  
+  const normalStyles = {
+    display: 'flex',
+    flexDirection: 'column',
+    marginTop: '24px',
+  }
   return (
     <Box sx={{
       backgroundColor: 'white',
@@ -25,24 +56,26 @@ const GraphControls = ({ controls, values, onValueChange }: GraphControlsProps) 
       width: '100%'
     }}>
       <Typography variant="h1">Graph Controls</Typography>
-      <Typography variant="body1" sx={{ marginTop: '16px' }}>
+      <Typography variant="body1" sx={{ marginTop: '12px' }}>
         Dynamically alter the graphs by adjusting the variables provided in the controls. By modifying parameters such as the range, scale, or coefficients, students can observe real-time changes in the 3D visualizations.
       </Typography>
       <Typography sx={{ 
-        marginTop: '100px',
+        marginTop: '48px',
         fontSize: '16px',
         fontWeight: 600,
         lineHeight: 'auto',
         letterSpacing: '-0.2px'
       }}>
-        Variables
+        Variable Controls
       </Typography>
-      
-      {controls.map((control) => (
-        <Box key={control.name} sx={{ marginTop: '24px' }}>
+
+      {/* Scrollable container for controls */}
+      <Box sx={shouldEnableScrolling ? scrollableStyles : normalStyles}>
+        {controls.map((control, index) => (
+        <Box key={control.name} sx={{ marginTop: index === 0 ? '0px' : '24px' }}>
           <Typography sx={{
             fontFamily: 'Inter',
-            fontSize: '14px',
+            fontSize: '12px',
             fontWeight: 500,
             lineHeight: 'auto',
             letterSpacing: '-0.2px',
@@ -114,7 +147,8 @@ const GraphControls = ({ controls, values, onValueChange }: GraphControlsProps) 
             </Typography>
           </Box>
         </Box>
-      ))}
+        ))}
+      </Box>
     </Box>
   )
 }

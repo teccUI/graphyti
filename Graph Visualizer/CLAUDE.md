@@ -2,6 +2,10 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+# Base Instructions:
+- always analyze the request and reply with how the implementation is going to be
+- always ask for permission to code after analysis and implementation plan is done
+
 ## Project Overview
 
 Graphyti is an interactive 3D visualizer for mathematical graphs and formulas built by Raj Paul (@paul_designs). The goal is to transform abstract mathematical concepts into tangible, interactive 3D visualizations to enhance student understanding.
