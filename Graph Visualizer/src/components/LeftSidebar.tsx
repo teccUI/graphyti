@@ -12,25 +12,28 @@ interface LeftSidebarProps {
 
 export default function LeftSidebar({ selectedGraph, onGraphChange }: LeftSidebarProps) {
   const [selectedCategory, setSelectedCategory] = React.useState<string>('')
-  const allCategories = getAllCategories()
-  const categoryGraphs = selectedCategory ? getGraphsByCategory(selectedCategory) : []
+  const allCategories = getAllCategories().sort()
+  const categoryGraphs = selectedCategory ? getGraphsByCategory(selectedCategory).sort((a, b) => a.name.localeCompare(b.name)) : []
 
-  // Auto-select first category and first formula on component mount
+  // Sync category with selected graph
   React.useEffect(() => {
-    if (!selectedCategory && allCategories.length > 0) {
+    if (selectedGraph && selectedGraph.category !== selectedCategory) {
+      setSelectedCategory(selectedGraph.category)
+    } else if (!selectedCategory && allCategories.length > 0) {
+      // Fallback: set first category if no category is selected
       const firstCategory = allCategories[0]
       setSelectedCategory(firstCategory)
-      const firstCategoryGraphs = getGraphsByCategory(firstCategory)
-      if (firstCategoryGraphs.length > 0) {
+      const firstCategoryGraphs = getGraphsByCategory(firstCategory).sort((a, b) => a.name.localeCompare(b.name))
+      if (firstCategoryGraphs.length > 0 && !selectedGraph) {
         onGraphChange(firstCategoryGraphs[0].id)
       }
     }
-  }, [selectedCategory, onGraphChange, allCategories])
+  }, [selectedGraph, selectedCategory, allCategories, onGraphChange])
 
   const handleCategoryChange = (categoryName: string) => {
     setSelectedCategory(categoryName)
     // Reset selected graph when category changes
-    const newCategoryGraphs = getGraphsByCategory(categoryName)
+    const newCategoryGraphs = getGraphsByCategory(categoryName).sort((a, b) => a.name.localeCompare(b.name))
     if (newCategoryGraphs.length > 0) {
       onGraphChange(newCategoryGraphs[0].id)
     }
@@ -172,7 +175,8 @@ export default function LeftSidebar({ selectedGraph, onGraphChange }: LeftSideba
               key={category} 
               value={category}
               sx={{
-                marginLeft: '8px',
+                marginLeft: '7px',
+                marginRight: '2px',
                 borderRadius: '4px',
                 fontSize: '14px',
                 '&:hover': {
@@ -205,7 +209,7 @@ export default function LeftSidebar({ selectedGraph, onGraphChange }: LeftSideba
       
       <FormControl fullWidth sx={{ marginBottom: '24px' }}>
         <Select
-          value={selectedGraph?.id || ''}
+          value={selectedGraph && categoryGraphs.some(g => g.id === selectedGraph.id) ? selectedGraph.id : ''}
           onChange={(e) => onGraphChange(e.target.value)}
           displayEmpty
           disabled={!selectedCategory}
@@ -304,7 +308,8 @@ export default function LeftSidebar({ selectedGraph, onGraphChange }: LeftSideba
               key={graph.id} 
               value={graph.id}
               sx={{
-                marginLeft: '8px',
+                marginLeft: '7px',
+                marginRight: '5px',
                 borderRadius: '4px',
                 fontSize: '14px',
                 '&:hover': {
