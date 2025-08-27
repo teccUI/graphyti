@@ -25,8 +25,9 @@ function GraphRenderer({ graph, controlValues }: GraphRendererProps) {
     try {
       // Some shapes are better represented with built-in Three.js geometries
       if (graph.name === 'Cylinder' || graph.name === 'Sphere' || graph.name === 'Cone' || 
-          graph.name === 'Torus (Doughnut)') {
-        return createDefaultGeometry(graph)
+          graph.name === 'Torus (Doughnut)' || graph.name === 'Ellipsoid' || 
+          graph.name === 'Paraboloid' || graph.name === 'Hyperbolic Paraboloid') {
+        return createDefaultGeometry(graph, controlValues)
       }
       
       // Special handling for hyperboloid of two sheets which needs two separate surfaces
@@ -37,6 +38,11 @@ function GraphRenderer({ graph, controlValues }: GraphRendererProps) {
       // Special handling for hyperboloid of one sheet which needs both +z and -z surfaces
       if (graph.name === 'Hyperboloid of One Sheet') {
         return createHyperboloidOneSheetGeometry(controlValues)
+      }
+      
+      // Special handling for Enneper Surface which needs parametric rendering
+      if (graph.name === 'Enneper Surface') {
+        return createEnneperSurfaceGeometry(controlValues)
       }
       
       // Handle Wave Function specifically as 3D Surface
@@ -339,7 +345,7 @@ function createDefaultGeometry(graph: Graph, controlValues: Record<string, numbe
     case 'Ellipsoid':
       return createEllipsoidGeometry(controlValues)
     case 'Cone':
-      return createDoubleConeGeometry(controlValues)
+      return createConeGeometry(controlValues)
     case 'Cylinder':
       return createMathematicalCylinderGeometry(controlValues)
     case 'Torus (Doughnut)': {
@@ -358,17 +364,42 @@ function createParaboloidGeometry(controlValues: Record<string, number> = {}): T
   const scale = controlValues.scale || 8
   const a = controlValues.a || 2
   const b = controlValues.b || 2
-  const geometry = new THREE.PlaneGeometry(scale, scale, resolution, resolution)
+  
+  // Dynamic plane sizing based on mathematical parameters
+  const baseSize = 4 // Reference size for consistent visualization
+  const scaleFactor = scale / 8 // Normalize scale parameter
+  
+  // Plane dimensions are proportional to 'a' and 'b' parameters
+  const xSize = baseSize * a * scaleFactor
+  const ySize = baseSize * b * scaleFactor
+  
+  // Create plane with dynamic dimensions
+  const geometry = new THREE.PlaneGeometry(xSize, ySize, resolution, resolution)
   const positions = geometry.attributes.position.array as Float32Array
+  
+  // Height scaling factor for Z dimension
+  const heightScale = scaleFactor * 2
   
   for (let i = 0; i < positions.length; i += 3) {
     const x = positions[i]
     const y = positions[i + 1]
-    // Paraboloid: z = x²/a² + y²/b² with scale factor
-    positions[i + 2] = ((x * x) / (a * a) + (y * y) / (b * b)) * scale / 8
+    
+    // Pure paraboloid equation: z = x²/a² + y²/b²
+    // No coordinate tricks - use actual mathematical formula
+    const z = ((x * x) / (a * a) + (y * y) / (b * b)) * heightScale
+    
+    positions[i + 2] = z
   }
   
   geometry.attributes.position.needsUpdate = true
+  
+  // Apply X-axis rotation if specified
+  const xRotation = controlValues.xRotation || 0
+  if (xRotation !== 0) {
+    const rotationRad = (xRotation * Math.PI) / 180
+    geometry.rotateX(rotationRad)
+  }
+  
   geometry.computeVertexNormals()
   return geometry
 }
@@ -395,22 +426,27 @@ function createHyperbolicParaboloidGeometry(controlValues: Record<string, number
 
 function createEllipsoidGeometry(controlValues: Record<string, number> = {}): THREE.BufferGeometry {
   const resolution = controlValues.resolution || 32
+  
+  // Create a fresh geometry each time to avoid caching issues
   const geometry = new THREE.SphereGeometry(1, resolution, resolution)
-  const positions = geometry.attributes.position.array as Float32Array
   
-  // Transform sphere into ellipsoid by scaling along different axes
-  const a = controlValues.a || 3  // x-axis radius
-  const b = controlValues.b || 2  // y-axis radius  
-  const c = controlValues.c || 1.5 // z-axis radius
+  // Get scaling and translation parameters
+  const a = controlValues.a || 3  // X semi-axis
+  const b = controlValues.b || 2  // Y semi-axis  
+  const c = controlValues.c || 1.5 // Z semi-axis
+  const xOffset = controlValues.x || 0 // X translation
+  const yOffset = controlValues.y || 0 // Y translation
+  const zOffset = controlValues.z || 0 // Z translation
   
-  for (let i = 0; i < positions.length; i += 3) {
-    positions[i] *= a     // Scale x
-    positions[i + 1] *= b // Scale y
-    positions[i + 2] *= c // Scale z
-  }
+  // Apply scaling first
+  geometry.scale(a, b, c)
   
-  geometry.attributes.position.needsUpdate = true
+  // Apply translation
+  geometry.translate(xOffset, yOffset, zOffset)
+  
+  // Recompute normals after transformations
   geometry.computeVertexNormals()
+  
   return geometry
 }
 
@@ -487,53 +523,79 @@ function createHyperboloidOneSheetGeometry(controlValues: Record<string, number>
   return geometry
 }
 
-function createDoubleConeGeometry(controlValues: Record<string, number> = {}): THREE.BufferGeometry {
-  // Create mathematical cone surface: x²/a² + y²/b² = z²/c²
-  // Option for single or double cone
-  const a = controlValues.a || 2 // Base radius (using a parameter)
-  const zRange = controlValues.zRange || 4 // Height from origin to base
+function createConeGeometry(controlValues: Record<string, number> = {}): THREE.BufferGeometry {
+  // Create a simple cone geometry with user controls
+  const radius = controlValues.a || 2 // Base radius
+  const height = controlValues.zRange || 4 // Cone height
   const resolution = controlValues.resolution || 16
-  const doubleCone = controlValues.doubleCone || 1 // 1 = double, 0 = single
   const radialSegments = Math.max(8, Math.min(32, resolution))
   
-  if (doubleCone === 0) {
-    // Single cone (upward)
-    const cone = new THREE.ConeGeometry(a, zRange, radialSegments, 1, true)
-    cone.translate(0, zRange/2, 0)
-    return cone
-  } else {
-    // Double cone (traditional mathematical cone)
-    // Create upper cone
-    const upperCone = new THREE.ConeGeometry(a, zRange, radialSegments, 1, true)
-    upperCone.translate(0, zRange/2, 0)
-    
-    // Create lower cone (inverted)
-    const lowerCone = new THREE.ConeGeometry(a, zRange, radialSegments, 1, true)
-    lowerCone.translate(0, -zRange/2, 0)
-    lowerCone.rotateX(Math.PI) // Flip upside down
-    
-    // Merge the two cones manually
-    const upperPositions = upperCone.attributes.position.array as Float32Array
-    const lowerPositions = lowerCone.attributes.position.array as Float32Array
-    
-    // Combine positions
-    const combinedPositions = new Float32Array(upperPositions.length + lowerPositions.length)
-    combinedPositions.set(upperPositions, 0)
-    combinedPositions.set(lowerPositions, upperPositions.length)
-    
-    const mergedGeometry = new THREE.BufferGeometry()
-    mergedGeometry.setAttribute('position', new THREE.BufferAttribute(combinedPositions, 3))
-    
-    // Combine indices with offset for second cone
-    const upperIndices = Array.from(upperCone.index?.array || [])
-    const lowerIndices = Array.from(lowerCone.index?.array || []).map(i => i + (upperPositions.length / 3))
-    const combinedIndices = [...upperIndices, ...lowerIndices]
-    
-    mergedGeometry.setIndex(combinedIndices)
-    mergedGeometry.computeVertexNormals()
-    
-    return mergedGeometry
+  // Create a single upward-pointing cone
+  const cone = new THREE.ConeGeometry(radius, height, radialSegments, 1, false)
+  
+  // Position cone so base is at y=0 and tip points upward
+  cone.translate(0, height/2, 0)
+  
+  return cone
+}
+
+function createEnneperSurfaceGeometry(controlValues: Record<string, number> = {}): THREE.BufferGeometry {
+  // Create Enneper Surface using proper parametric equations:
+  // x = u - u³/3 + uv²
+  // y = v - v³/3 + vu²  
+  // z = u² - v²
+  
+  const resolution = controlValues.resolution || 40
+  const scale = controlValues.scale || 0.5
+  const uRange = controlValues.uRange || 2
+  const vRange = controlValues.vRange || 2
+  
+  const vertices: number[] = []
+  const indices: number[] = []
+  
+  let vertexIndex = 0
+  
+  // Create parametric surface mesh
+  for (let i = 0; i <= resolution; i++) {
+    for (let j = 0; j <= resolution; j++) {
+      // Map to parameter space
+      const u = -uRange + (2 * uRange * i) / resolution
+      const v = -vRange + (2 * vRange * j) / resolution
+      
+      // Enneper Surface parametric equations
+      const x = scale * (u - (u * u * u) / 3 + u * v * v)
+      const y = scale * (v - (v * v * v) / 3 + v * u * u)
+      const z = scale * (u * u - v * v)
+      
+      vertices.push(x, y, z)
+      
+      // Create indices for triangulation
+      if (i < resolution && j < resolution) {
+        const current = vertexIndex
+        const next = vertexIndex + 1
+        const nextRow = vertexIndex + (resolution + 1)
+        const nextRowNext = nextRow + 1
+        
+        // Two triangles per quad
+        indices.push(current, next, nextRow)
+        indices.push(next, nextRowNext, nextRow)
+      }
+      
+      vertexIndex++
+    }
   }
+  
+  const geometry = new THREE.BufferGeometry()
+  geometry.setFromPoints(vertices.map((_, i, arr) => {
+    if (i % 3 === 0) {
+      return new THREE.Vector3(arr[i], arr[i + 1], arr[i + 2])
+    }
+  }).filter(Boolean) as THREE.Vector3[])
+  
+  geometry.setIndex(indices)
+  geometry.computeVertexNormals()
+  
+  return geometry
 }
 
 function createHyperboloidTwoSheetsGeometry(controlValues: Record<string, number> = {}): THREE.BufferGeometry {
@@ -625,17 +687,8 @@ function calculateSurfaceZ(graph: Graph, x: number, y: number, controlValues: Re
     }
   }
   
-  if (graph.name === 'Enneper Surface') {
-    // This is complex - let's create a simpler approximation
-    // x=u-u^3/3+uv^2, y=v-v^3/3+vu^2, z=u^2-v^2
-    // Use x and y as approximations for u and v with range controls
-    const scale = controlValues.scale || 0.5
-    const uRange = controlValues.uRange || 2
-    const vRange = controlValues.vRange || 2
-    const u = (x * scale) * (uRange / 2)
-    const v = (y * scale) * (vRange / 2)
-    return u*u - v*v
-  }
+  // Note: Enneper Surface now uses dedicated parametric geometry function
+  // No surface calculation needed here
   
   // Handle specific implicit equations by solving for z
   if (graph.name === 'Ellipsoid') {
@@ -649,9 +702,9 @@ function calculateSurfaceZ(graph: Graph, x: number, y: number, controlValues: Re
   
   if (graph.name === 'Cone') {
     // x^2/a^2 + y^2/b^2 - z^2/c^2 = 0 -> z = ±c*sqrt(x^2/a^2 + y^2/b^2)
-    const a = controlValues.a || 2
-    const b = controlValues.a || 2  // Use same value for b as a for symmetrical cone
-    const c = controlValues.c || 2
+    const a = controlValues.a || 2  // X-axis scale
+    const b = controlValues.a || 2  // Y-axis scale (same as a for circular cone)
+    const c = controlValues.c || 2  // Z-axis scale
     return c * Math.sqrt((x*x)/(a*a) + (y*y)/(b*b))
   }
   

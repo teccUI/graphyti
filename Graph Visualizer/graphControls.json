@@ -5,7 +5,8 @@
     "controls": [
       { "name": "a", "label": "a (X-axis scaling)", "defaultValue": 2, "min": 0.1, "max": 10, "step": 0.1 },
       { "name": "b", "label": "b (Y-axis scaling)", "defaultValue": 2, "min": 0.1, "max": 10, "step": 0.1 },
-      { "name": "scale", "label": "Scale", "defaultValue": 8, "min": 1, "max": 20, "step": 0.5 }
+      { "name": "scale", "label": "Scale", "defaultValue": 8, "min": 1, "max": 20, "step": 0.5 },
+      { "name": "xRotation", "label": "X-axis Rotation (°)", "defaultValue": 0, "min": 0, "max": 360, "step": 15 }
     ]
   },
   {
@@ -21,19 +22,20 @@
     "id": "graph_003",
     "name": "Ellipsoid",
     "controls": [
-      { "name": "a", "label": "X-axis radius", "defaultValue": 3, "min": 0.5, "max": 10, "step": 0.1 },
-      { "name": "b", "label": "Y-axis radius", "defaultValue": 2, "min": 0.5, "max": 10, "step": 0.1 },
-      { "name": "c", "label": "Z-axis radius", "defaultValue": 1.5, "min": 0.5, "max": 10, "step": 0.1 }
+      { "name": "a", "label": "a (X semi-axis)", "defaultValue": 3, "min": 0.5, "max": 10, "step": 0.1 },
+      { "name": "b", "label": "b (Y semi-axis)", "defaultValue": 2, "min": 0.5, "max": 10, "step": 0.1 },
+      { "name": "c", "label": "c (Z semi-axis)", "defaultValue": 1.5, "min": 0.5, "max": 10, "step": 0.1 },
+      { "name": "x", "label": "x (X offset)", "defaultValue": 0, "min": -5, "max": 5, "step": 0.1 },
+      { "name": "y", "label": "y (Y offset)", "defaultValue": 0, "min": -5, "max": 5, "step": 0.1 },
+      { "name": "z", "label": "z (Z offset)", "defaultValue": 0, "min": -5, "max": 5, "step": 0.1 }
     ]
   },
   {
     "id": "graph_004",
     "name": "Cone",
     "controls": [
-      { "name": "a", "label": "X-axis scale", "defaultValue": 2, "min": 0.5, "max": 10, "step": 0.1 },
-      { "name": "c", "label": "Z-axis scale", "defaultValue": 2, "min": 0.5, "max": 10, "step": 0.1 },
-      { "name": "zRange", "label": "Z-axis Range", "defaultValue": 4, "min": 1, "max": 10, "step": 0.5 },
-      { "name": "doubleCone", "label": "Double Cone", "defaultValue": 1, "min": 0, "max": 1, "step": 1 }
+      { "name": "a", "label": "Radius", "defaultValue": 2, "min": 0.5, "max": 8, "step": 0.1 },
+      { "name": "zRange", "label": "Height", "defaultValue": 4, "min": 1, "max": 12, "step": 0.5 }
     ]
   },
   {

@@ -154,7 +154,7 @@ export default function RightCanvas({ selectedGraph, onPreviousGraph, onNextGrap
                         args={[new Float32Array([-10, pos, 0, 10, pos, 0]), 3]}
                       />
                     </bufferGeometry>
-                    <lineBasicMaterial color="#e0e0e0" transparent opacity={0.3} />
+                    <lineBasicMaterial color="#999999" transparent opacity={0.3} />
                   </line>
                   {/* Vertical lines */}
                   <line>
@@ -164,7 +164,7 @@ export default function RightCanvas({ selectedGraph, onPreviousGraph, onNextGrap
                         args={[new Float32Array([pos, -10, 0, pos, 10, 0]), 3]}
                       />
                     </bufferGeometry>
-                    <lineBasicMaterial color="#e0e0e0" transparent opacity={0.3} />
+                    <lineBasicMaterial color="#999999" transparent opacity={0.3} />
                   </line>
                 </group>
               );
@@ -185,7 +185,7 @@ export default function RightCanvas({ selectedGraph, onPreviousGraph, onNextGrap
                         args={[new Float32Array([-10, pos, 0, 10, pos, 0]), 3]}
                       />
                     </bufferGeometry>
-                    <lineBasicMaterial color="#e0e0e0" transparent opacity={0.3} />
+                    <lineBasicMaterial color="#999999" transparent opacity={0.3} />
                   </line>
                   {/* Vertical lines */}
                   <line>
@@ -195,7 +195,7 @@ export default function RightCanvas({ selectedGraph, onPreviousGraph, onNextGrap
                         args={[new Float32Array([pos, -10, 0, pos, 10, 0]), 3]}
                       />
                     </bufferGeometry>
-                    <lineBasicMaterial color="#e0e0e0" transparent opacity={0.3} />
+                    <lineBasicMaterial color="#999999" transparent opacity={0.3} />
                   </line>
                 </group>
               );
