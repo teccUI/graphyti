@@ -5,6 +5,8 @@ import { OrbitControls, Text } from '@react-three/drei'
 import { useRef, useState } from 'react'
 import { OrbitControls as OrbitControlsImpl } from 'three-stdlib'
 import GraphRenderer from '../GraphRenderer'
+import CoordinateTooltip from './CoordinateTooltip'
+import CanvasInspector from './CanvasInspector'
 
 interface Graph {
   id: string
@@ -28,6 +30,11 @@ export default function RightCanvas({ selectedGraph, onPreviousGraph, onNextGrap
   const controlsRef = useRef<OrbitControlsImpl>(null)
   const [isRotating, setIsRotating] = useState(false)
   const [isPanMode, setIsPanMode] = useState(false)
+  const [inspectionState, setInspectionState] = useState({
+    coordinates: null as { x: number; y: number; z: number } | null,
+    mousePosition: { x: 0, y: 0 },
+    isVisible: false
+  })
   
   const handleZoomIn = () => {
     if (controlsRef.current) {
@@ -112,6 +119,7 @@ export default function RightCanvas({ selectedGraph, onPreviousGraph, onNextGrap
     <Box sx={{
       position: 'relative',
       height: '100%',
+      minHeight: '600px',
       backgroundColor: '#f9fafb',
       borderRadius: '21px',
       overflow: 'hidden',
@@ -121,6 +129,7 @@ export default function RightCanvas({ selectedGraph, onPreviousGraph, onNextGrap
       <Box sx={{
         position: 'relative',
         height: '100%',
+        minHeight: '788px',
         backgroundColor: '#FDFDFD',
         borderRadius: '16px'
       }}>
@@ -277,6 +286,9 @@ export default function RightCanvas({ selectedGraph, onPreviousGraph, onNextGrap
           
           {/* Dynamic Graph Rendering */}
           {selectedGraph && <GraphRenderer graph={selectedGraph} controlValues={controlValues} />}
+          
+          {/* Coordinate Inspection */}
+          <CanvasInspector onInspectionUpdate={setInspectionState} />
         </Canvas>
       </Box>
 
@@ -691,6 +703,15 @@ export default function RightCanvas({ selectedGraph, onPreviousGraph, onNextGrap
             </ButtonGroup>
           </Box>
       </Box>
+
+      {/* Coordinate Inspection Tooltip */}
+      <CoordinateTooltip
+        visible={inspectionState.isVisible}
+        coordinates={inspectionState.coordinates}
+        mousePosition={inspectionState.mousePosition}
+        graph={selectedGraph}
+        controlValues={controlValues}
+      />
 
     </Box>
   )
