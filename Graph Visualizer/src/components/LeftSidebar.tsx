@@ -1,19 +1,9 @@
 import React from 'react'
 import { Box, Typography, Select, MenuItem, FormControl, IconButton } from '@mui/material'
 import { EnvelopeSimple, LinkedinLogo, CaretDown } from 'phosphor-react'
-import graphList from '../../graphList.json'
+import { getCategorizeGraphs, getAllGraphs, getGraphById } from '../utils/graphUtils'
+import type { Graph } from '../utils/graphUtils'
 import logoGraphyti from '../assets/logo__graphyti.svg'
-
-interface Graph {
-  id: string
-  name: string
-  category: string
-  subject: string
-  level: string
-  type: string
-  equation_latex: string
-  description: string
-}
 
 interface LeftSidebarProps {
   selectedGraph: Graph | null
@@ -21,35 +11,15 @@ interface LeftSidebarProps {
 }
 
 export default function LeftSidebar({ selectedGraph, onGraphChange }: LeftSidebarProps) {
-  // Categorize graphs into 2D and 3D and sort alphabetically
-  const categorizeGraphs = () => {
-    const conceptually2DCurves = ['Viviani\'s Curve', 'Trefoil Knot'] // 3D parametric curves that are conceptually 2D-like
-    
-    const is2D = (graph: Graph) => 
-      graph.type.includes('2D Function') || 
-      graph.type.includes('2D Parametric') || 
-      graph.type.includes('2D Polar') ||
-      (graph.type === '3D Parametric Curve' && conceptually2DCurves.includes(graph.name))
-      
-    const is3D = (graph: Graph) => 
-      graph.type.includes('3D Surface') || 
-      graph.type === '2D Function/3D Surface' ||
-      (graph.type === '3D Parametric Curve' && !conceptually2DCurves.includes(graph.name))
-    
-    const graphs2D = graphList.filter(graph => is2D(graph)).sort((a, b) => a.name.localeCompare(b.name))
-    const graphs3D = graphList.filter(graph => is3D(graph)).sort((a, b) => a.name.localeCompare(b.name))
-    
-    return { graphs2D, graphs3D }
-  }
-
-  const { graphs2D, graphs3D } = categorizeGraphs()
+  const { graphs2D, graphs3D } = getCategorizeGraphs()
+  const allGraphs = getAllGraphs()
 
   // Auto-select first formula on component mount if none selected
   React.useEffect(() => {
-    if (!selectedGraph && graphList.length > 0) {
-      onGraphChange(graphList[0].id)
+    if (!selectedGraph && allGraphs.length > 0) {
+      onGraphChange(allGraphs[0].id)
     }
-  }, [selectedGraph, onGraphChange])
+  }, [selectedGraph, onGraphChange, allGraphs])
   return (
     <Box sx={{
       display: 'flex',
@@ -120,7 +90,7 @@ export default function LeftSidebar({ selectedGraph, onGraphChange }: LeftSideba
                 color: '#787878' 
               }}>select a formula to render</Typography>
             }
-            const graph = graphList.find(g => g.id === selected)
+            const graph = getGraphById(selected)
             return graph?.name
           }}
           MenuProps={{
