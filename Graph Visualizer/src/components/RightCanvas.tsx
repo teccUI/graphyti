@@ -124,7 +124,10 @@ export default function RightCanvas({ selectedGraph, onPreviousGraph, onNextGrap
         backgroundColor: '#FDFDFD',
         borderRadius: '16px'
       }}>
-        <Canvas camera={{ position: [5, 5, 5], fov: 45 }}>
+        <Canvas 
+          camera={{ position: [5, 5, 5], fov: 110 }}
+          style={{ borderRadius: '21px' }}
+        >
           <ambientLight intensity={0.6} />
           <directionalLight position={[10, 10, 10]} intensity={0.8} />
           

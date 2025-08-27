@@ -1,7 +1,7 @@
 import React from 'react'
 import { Box, Typography, Select, MenuItem, FormControl, IconButton } from '@mui/material'
 import { EnvelopeSimple, LinkedinLogo, CaretDown } from 'phosphor-react'
-import { getCategorizeGraphs, getAllGraphs, getGraphById } from '../utils/graphUtils'
+import { getAllCategories, getGraphsByCategory, getGraphById } from '../utils/graphUtils'
 import type { Graph } from '../utils/graphUtils'
 import logoGraphyti from '../assets/logo__graphyti.svg'
 
@@ -11,15 +11,30 @@ interface LeftSidebarProps {
 }
 
 export default function LeftSidebar({ selectedGraph, onGraphChange }: LeftSidebarProps) {
-  const { graphs2D, graphs3D } = getCategorizeGraphs()
-  const allGraphs = getAllGraphs()
+  const [selectedCategory, setSelectedCategory] = React.useState<string>('')
+  const allCategories = getAllCategories()
+  const categoryGraphs = selectedCategory ? getGraphsByCategory(selectedCategory) : []
 
-  // Auto-select first formula on component mount if none selected
+  // Auto-select first category and first formula on component mount
   React.useEffect(() => {
-    if (!selectedGraph && allGraphs.length > 0) {
-      onGraphChange(allGraphs[0].id)
+    if (!selectedCategory && allCategories.length > 0) {
+      const firstCategory = allCategories[0]
+      setSelectedCategory(firstCategory)
+      const firstCategoryGraphs = getGraphsByCategory(firstCategory)
+      if (firstCategoryGraphs.length > 0) {
+        onGraphChange(firstCategoryGraphs[0].id)
+      }
     }
-  }, [selectedGraph, onGraphChange, allGraphs])
+  }, [selectedCategory, onGraphChange, allCategories])
+
+  const handleCategoryChange = (categoryName: string) => {
+    setSelectedCategory(categoryName)
+    // Reset selected graph when category changes
+    const newCategoryGraphs = getGraphsByCategory(categoryName)
+    if (newCategoryGraphs.length > 0) {
+      onGraphChange(newCategoryGraphs[0].id)
+    }
+  }
   return (
     <Box sx={{
       display: 'flex',
@@ -63,7 +78,7 @@ export default function LeftSidebar({ selectedGraph, onGraphChange }: LeftSideba
         The vision is to transform abstract mathematical concepts into tangible, interactive 3D visualizations with the aim to deepen a student's understanding.
       </Typography>
 
-      {/* Formula Selector */}
+      {/* Category Selector */}
       <Typography variant="subtitle1" sx={{ 
         marginBottom: '8px',
         fontSize: '14px',
@@ -71,13 +86,13 @@ export default function LeftSidebar({ selectedGraph, onGraphChange }: LeftSideba
         lineHeight: 'auto',
         letterSpacing: '-0.2px'
       }}>
-        Select formula
+        Select category
       </Typography>
       
       <FormControl fullWidth sx={{ marginBottom: '24px' }}>
         <Select
-          value={selectedGraph?.id || ''}
-          onChange={(e) => onGraphChange(e.target.value)}
+          value={selectedCategory}
+          onChange={(e) => handleCategoryChange(e.target.value)}
           displayEmpty
           renderValue={(selected) => {
             if (!selected) {
@@ -88,10 +103,9 @@ export default function LeftSidebar({ selectedGraph, onGraphChange }: LeftSideba
                 lineHeight: 'auto',
                 letterSpacing: '-0.2px',
                 color: '#787878' 
-              }}>select a formula to render</Typography>
+              }}>select a category first</Typography>
             }
-            const graph = getGraphById(selected)
-            return graph?.name
+            return selected
           }}
           MenuProps={{
             anchorOrigin: {
@@ -153,10 +167,10 @@ export default function LeftSidebar({ selectedGraph, onGraphChange }: LeftSideba
             </Box>
           )}
         >
-          {graphs2D.map((graph) => (
+          {allCategories.map((category) => (
             <MenuItem 
-              key={graph.id} 
-              value={graph.id}
+              key={category} 
+              value={category}
               sx={{
                 marginLeft: '8px',
                 borderRadius: '4px',
@@ -172,10 +186,120 @@ export default function LeftSidebar({ selectedGraph, onGraphChange }: LeftSideba
                 }
               }}
             >
-              {graph.name}
+              {category}
             </MenuItem>
           ))}
-          {graphs3D.map((graph) => (
+        </Select>
+      </FormControl>
+
+      {/* Formula Selector */}
+      <Typography variant="subtitle1" sx={{ 
+        marginBottom: '8px',
+        fontSize: '14px',
+        fontWeight: 500,
+        lineHeight: 'auto',
+        letterSpacing: '-0.2px'
+      }}>
+        Select formula
+      </Typography>
+      
+      <FormControl fullWidth sx={{ marginBottom: '24px' }}>
+        <Select
+          value={selectedGraph?.id || ''}
+          onChange={(e) => onGraphChange(e.target.value)}
+          displayEmpty
+          disabled={!selectedCategory}
+          renderValue={(selected) => {
+            if (!selected) {
+              if (!selectedCategory) {
+                return <Typography sx={{ 
+                  fontFamily: 'Inter, sans-serif',
+                  fontWeight: 400,
+                  fontSize: '11px',
+                  lineHeight: 'auto',
+                  letterSpacing: '-0.2px',
+                  color: '#787878' 
+                }}>select a category first</Typography>
+              }
+              return <Typography sx={{ 
+                fontFamily: 'Inter, sans-serif',
+                fontWeight: 400,
+                fontSize: '11px',
+                lineHeight: 'auto',
+                letterSpacing: '-0.2px',
+                color: '#787878' 
+              }}>select a formula to render</Typography>
+            }
+            const graph = getGraphById(selected)
+            return graph?.name
+          }}
+          MenuProps={{
+            anchorOrigin: {
+              vertical: 'bottom',
+              horizontal: 'left',
+            },
+            transformOrigin: {
+              vertical: 'top',
+              horizontal: 'left',
+            },
+            PaperProps: {
+              style: {
+                maxHeight: 320,
+                marginTop: '8px',
+                boxShadow: '0 4px 20px rgba(201, 201, 201, 0.7)',
+                width: '330px',
+              },
+              sx: {
+                '@media (max-width: 768px)': {
+                  width: '254px !important',
+                  minWidth: '254px !important',
+                  maxWidth: '254px !important'
+                },
+                '&::-webkit-scrollbar': {
+                  width: '4px',
+                },
+                '&::-webkit-scrollbar-track': {
+                  background: 'transparent',
+                },
+                '&::-webkit-scrollbar-thumb': {
+                  backgroundColor: '#ffffff',
+                  borderRadius: '4px',
+                  border: 'none',
+                },
+                '&::-webkit-scrollbar-thumb:hover': {
+                  backgroundColor: '#f0f0f0',
+                },
+              },
+            },
+          }}
+          sx={{
+            height: '44px',
+            borderRadius: '8px',
+            border: '1px solid #DFDFDF',
+            fontSize: '14px',
+            '& .MuiOutlinedInput-notchedOutline': {
+              border: 'none'
+            },
+            '&.Mui-disabled': {
+              backgroundColor: '#f8f8f8',
+              '& .MuiSelect-select': {
+                color: '#c0c0c0'
+              }
+            }
+          }}
+          IconComponent={() => (
+            <Box sx={{ 
+              position: 'absolute', 
+              right: '12px', 
+              top: '55%',
+              transform: 'translateY(-50%)',
+              pointerEvents: 'none' 
+            }}>
+              <CaretDown size={16} color={selectedCategory ? "#787878" : "#c0c0c0"} />
+            </Box>
+          )}
+        >
+          {categoryGraphs.map((graph) => (
             <MenuItem 
               key={graph.id} 
               value={graph.id}

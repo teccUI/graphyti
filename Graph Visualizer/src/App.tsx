@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Box } from '@mui/material'
-import LeftSidebar from './components/LeftSidebar'
+import LeftSidebar from './components/leftsidebar'
 import RightCanvas from './components/RightCanvas'
 import GraphControls from './components/GraphControls'
 import { getOrderedGraphList, getGraphById } from './utils/graphUtils'
