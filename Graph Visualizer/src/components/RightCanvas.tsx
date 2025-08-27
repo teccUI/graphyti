@@ -1,4 +1,4 @@
-import { Box, IconButton, ButtonGroup, Tooltip } from '@mui/material'
+import { Box, IconButton, ButtonGroup, Tooltip, Typography } from '@mui/material'
 import { Plus, Minus, ArrowsClockwise, ArrowsOutCardinal, ArrowLineLeft, CaretLeft, CaretRight } from 'phosphor-react'
 import { Canvas } from '@react-three/fiber'
 import { OrbitControls, Text } from '@react-three/drei'
@@ -703,6 +703,44 @@ export default function RightCanvas({ selectedGraph, onPreviousGraph, onNextGrap
             </ButtonGroup>
           </Box>
       </Box>
+
+      {/* Floating Formula Display */}
+      {selectedGraph && (
+        <Box sx={{
+          position: 'absolute',
+          top: '34px',
+          right: '34px',
+          backgroundColor: '#FFFFFF',
+          borderRadius: '12px',
+          border: '1px solid #e0e0e0',
+          padding: '12px 16px',
+          maxWidth: '300px',
+          zIndex: 1000
+        }}>
+          {/* <Typography sx={{
+            fontSize: '12px',
+            fontWeight: 600,
+            lineHeight: 'auto',
+            letterSpacing: '-0.2px',
+            marginBottom: '6px',
+            color: '#787878'
+          }}>
+            Formula
+          </Typography> */}
+          <Typography sx={{
+            fontSize: '14px',
+            fontWeight: 400,
+            lineHeight: '1.3',
+            letterSpacing: '-0.2px',
+            fontFamily: 'monospace',
+            color: '#111111',
+            wordBreak: 'break-all',
+            whiteSpace: 'pre-wrap'
+          }}>
+            {selectedGraph.equation_latex}
+          </Typography>
+        </Box>
+      )}
 
       {/* Coordinate Inspection Tooltip */}
       <CoordinateTooltip
