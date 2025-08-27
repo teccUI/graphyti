@@ -1,4 +1,4 @@
-import React from 'react'
+// React is not used directly in this file, removed unused import
 import { Box, Typography, Select, MenuItem, FormControl, IconButton } from '@mui/material'
 import { EnvelopeSimple, LinkedinLogo, CaretDown } from 'phosphor-react'
 import { getAllCategories, getGraphsByCategory, getGraphById } from '../utils/graphUtils'
@@ -7,36 +7,17 @@ import logoGraphyti from '../assets/logo__graphyti.svg'
 
 interface LeftSidebarProps {
   selectedGraph: Graph | null
+  selectedCategory: string
   onGraphChange: (graphId: string) => void
+  onCategoryChange: (categoryName: string) => void
 }
 
-export default function LeftSidebar({ selectedGraph, onGraphChange }: LeftSidebarProps) {
-  const [selectedCategory, setSelectedCategory] = React.useState<string>('')
+export default function LeftSidebar({ selectedGraph, selectedCategory, onGraphChange, onCategoryChange }: LeftSidebarProps) {
   const allCategories = getAllCategories().sort()
   const categoryGraphs = selectedCategory ? getGraphsByCategory(selectedCategory).sort((a, b) => a.name.localeCompare(b.name)) : []
 
-  // Sync category with selected graph
-  React.useEffect(() => {
-    if (selectedGraph && selectedGraph.category !== selectedCategory) {
-      setSelectedCategory(selectedGraph.category)
-    } else if (!selectedCategory && allCategories.length > 0) {
-      // Fallback: set first category if no category is selected
-      const firstCategory = allCategories[0]
-      setSelectedCategory(firstCategory)
-      const firstCategoryGraphs = getGraphsByCategory(firstCategory).sort((a, b) => a.name.localeCompare(b.name))
-      if (firstCategoryGraphs.length > 0 && !selectedGraph) {
-        onGraphChange(firstCategoryGraphs[0].id)
-      }
-    }
-  }, [selectedGraph, selectedCategory, allCategories, onGraphChange])
-
   const handleCategoryChange = (categoryName: string) => {
-    setSelectedCategory(categoryName)
-    // Reset selected graph when category changes
-    const newCategoryGraphs = getGraphsByCategory(categoryName).sort((a, b) => a.name.localeCompare(b.name))
-    if (newCategoryGraphs.length > 0) {
-      onGraphChange(newCategoryGraphs[0].id)
-    }
+    onCategoryChange(categoryName)
   }
   return (
     <Box sx={{

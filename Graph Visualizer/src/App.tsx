@@ -3,14 +3,18 @@ import { Box } from '@mui/material'
 import LeftSidebar from './components/LeftSidebar'
 import RightCanvas from './components/RightCanvas'
 import GraphControls from './components/GraphControls'
-import { getOrderedGraphList, getGraphById, getAllCategories, getGraphsByCategory } from './utils/graphUtils'
+import { getGraphById, getAllCategories, getGraphsByCategory } from './utils/graphUtils'
 import type { Graph } from './utils/graphUtils'
 import graphControls from '../graphControls.json'
 
 function App() {
-  const orderedGraphs = getOrderedGraphList()
   const allCategories = getAllCategories().sort()
   
+  // Initialize with the first category
+  const getInitialCategory = (): string => {
+    return allCategories.length > 0 ? allCategories[0] : ''
+  }
+
   // Initialize with the first graph from the first category to ensure consistency
   const getInitialGraph = (): Graph | null => {
     if (allCategories.length > 0) {
@@ -18,9 +22,10 @@ function App() {
       const firstCategoryGraphs = getGraphsByCategory(firstCategory).sort((a, b) => a.name.localeCompare(b.name))
       return firstCategoryGraphs.length > 0 ? firstCategoryGraphs[0] : null
     }
-    return orderedGraphs[0] || null
+    return null
   }
   
+  const [selectedCategory, setSelectedCategory] = useState<string>(getInitialCategory())
   const [selectedGraph, setSelectedGraph] = useState<Graph | null>(getInitialGraph())
   const [controlValues, setControlValues] = useState<Record<string, number>>({})
 
@@ -37,10 +42,23 @@ function App() {
     }
   }, [selectedGraph])
 
+  const handleCategoryChange = (categoryName: string) => {
+    setSelectedCategory(categoryName)
+    // Reset to first graph in the new category
+    const newCategoryGraphs = getGraphsByCategory(categoryName).sort((a, b) => a.name.localeCompare(b.name))
+    if (newCategoryGraphs.length > 0) {
+      setSelectedGraph(newCategoryGraphs[0])
+    }
+  }
+
   const handleGraphChange = (graphId: string) => {
     const graph = getGraphById(graphId)
     if (graph) {
       setSelectedGraph(graph)
+      // Ensure category is synced with the selected graph
+      if (graph.category !== selectedCategory) {
+        setSelectedCategory(graph.category)
+      }
     }
   }
 
@@ -52,29 +70,35 @@ function App() {
   }
 
   const handlePreviousGraph = () => {
-    if (!selectedGraph) return
+    if (!selectedGraph || !selectedCategory) return
     
-    const currentIndex = orderedGraphs.findIndex(g => g.id === selectedGraph.id)
+    // Get graphs from current category only
+    const categoryGraphs = getGraphsByCategory(selectedCategory).sort((a, b) => a.name.localeCompare(b.name))
+    const currentIndex = categoryGraphs.findIndex(g => g.id === selectedGraph.id)
+    
     if (currentIndex > 0) {
-      const previousGraph = orderedGraphs[currentIndex - 1]
+      const previousGraph = categoryGraphs[currentIndex - 1]
       setSelectedGraph(previousGraph)
     } else {
-      // Wrap to the last graph
-      const lastGraph = orderedGraphs[orderedGraphs.length - 1]
+      // Wrap to the last graph in the category
+      const lastGraph = categoryGraphs[categoryGraphs.length - 1]
       setSelectedGraph(lastGraph)
     }
   }
 
   const handleNextGraph = () => {
-    if (!selectedGraph) return
+    if (!selectedGraph || !selectedCategory) return
     
-    const currentIndex = orderedGraphs.findIndex(g => g.id === selectedGraph.id)
-    if (currentIndex < orderedGraphs.length - 1) {
-      const nextGraph = orderedGraphs[currentIndex + 1]
+    // Get graphs from current category only
+    const categoryGraphs = getGraphsByCategory(selectedCategory).sort((a, b) => a.name.localeCompare(b.name))
+    const currentIndex = categoryGraphs.findIndex(g => g.id === selectedGraph.id)
+    
+    if (currentIndex < categoryGraphs.length - 1) {
+      const nextGraph = categoryGraphs[currentIndex + 1]
       setSelectedGraph(nextGraph)
     } else {
-      // Wrap to the first graph
-      const firstGraph = orderedGraphs[0]
+      // Wrap to the first graph in the category
+      const firstGraph = categoryGraphs[0]
       setSelectedGraph(firstGraph)
     }
   }
@@ -117,7 +141,9 @@ function App() {
           }}>
             <LeftSidebar 
               selectedGraph={selectedGraph}
+              selectedCategory={selectedCategory}
               onGraphChange={handleGraphChange}
+              onCategoryChange={handleCategoryChange}
             />
           </Box>
           
