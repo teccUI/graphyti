@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Box } from '@mui/material'
-import LeftSidebar from './components/leftsidebar'
+import LeftSidebar from './components/LeftSidebar'
 import RightCanvas from './components/RightCanvas'
 import GraphControls from './components/GraphControls'
 import { getOrderedGraphList, getGraphById, getAllCategories, getGraphsByCategory } from './utils/graphUtils'
@@ -95,7 +95,7 @@ function App() {
         minHeight: { xs: 'auto', md: 'auto' },
         display: 'flex',
         flexDirection: { xs: 'column', md: 'row' },
-        gap: { xs: '16px', md: '60px' },
+        gap: { xs: '16px', md: '18px' },
         width: '100%',
         boxSizing: 'border-box',
         alignItems: 'stretch'
@@ -145,6 +145,7 @@ function App() {
             controls={selectedGraph ? graphControls.find(gc => gc.id === selectedGraph.id)?.controls || [] : []}
             values={controlValues}
             onValueChange={handleControlValueChange}
+            selectedGraph={selectedGraph}
           />
         </Box>
       </Box>

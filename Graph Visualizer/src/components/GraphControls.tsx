@@ -1,4 +1,7 @@
 import { Box, Typography, Slider } from '@mui/material'
+import TabSystem from './TabSystem'
+import GraphInformation from './GraphInformation'
+import type { Graph } from '../utils/graphUtils'
 
 interface Control {
   name: string
@@ -13,9 +16,10 @@ interface GraphControlsProps {
   controls: Control[]
   values: Record<string, number>
   onValueChange: (controlName: string, value: number) => void
+  selectedGraph: Graph | null
 }
 
-const GraphControls = ({ controls, values, onValueChange }: GraphControlsProps) => {
+const GraphControls = ({ controls, values, onValueChange, selectedGraph }: GraphControlsProps) => {
   const shouldEnableScrolling = controls.length > 7
   
   const scrollableStyles = {
@@ -47,22 +51,14 @@ const GraphControls = ({ controls, values, onValueChange }: GraphControlsProps) 
     flexDirection: 'column',
     marginTop: '24px',
   }
-  return (
-    <Box sx={{
-      backgroundColor: 'white',
-      borderRadius: '24px',
-      padding: '32px 36px',
-      height: '100%',
-      width: '100%',
-      display: 'flex',
-      flexDirection: 'column'
-    }}>
-      <Typography variant="h1">Graph Controls</Typography>
-      <Typography variant="body1" sx={{ marginTop: '12px' }}>
+  // Graph Controls Tab Content
+  const graphControlsContent = (
+    <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+      <Typography variant="body1" sx={{ marginBottom: '12px' }}>
         Dynamically alter the graphs by adjusting the variables provided in the controls. By modifying parameters such as the range, scale, or coefficients, students can observe real-time changes in the 3D visualizations.
       </Typography>
       <Typography sx={{ 
-        marginTop: '48px',
+        marginTop: '36px',
         fontSize: '16px',
         fontWeight: 600,
         lineHeight: 'auto',
@@ -151,6 +147,25 @@ const GraphControls = ({ controls, values, onValueChange }: GraphControlsProps) 
         </Box>
         ))}
       </Box>
+    </Box>
+  )
+
+  return (
+    <Box sx={{
+      backgroundColor: 'white',
+      borderRadius: '24px',
+      padding: '32px 36px',
+      height: '100%',
+      width: '100%',
+      display: 'flex',
+      flexDirection: 'column'
+    }}>
+      <TabSystem 
+        tabLabels={['Graph Controls', 'Information']}
+      >
+        {graphControlsContent}
+        <GraphInformation selectedGraph={selectedGraph} />
+      </TabSystem>
     </Box>
   )
 }

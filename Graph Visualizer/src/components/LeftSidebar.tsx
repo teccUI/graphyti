@@ -329,7 +329,7 @@ export default function LeftSidebar({ selectedGraph, onGraphChange }: LeftSideba
         </Select>
       </FormControl>
 
-      {/* Formula Display */}
+      {/* Formula Display
       {selectedGraph && (
         <>
           <Typography variant="subtitle1" sx={{ 
@@ -378,7 +378,7 @@ export default function LeftSidebar({ selectedGraph, onGraphChange }: LeftSideba
             </Typography>
           </Box>
         </>
-      )}
+      )} */}
 
       {/* Social Links - pushed to bottom */}
       <Box sx={{
