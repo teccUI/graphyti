@@ -52,7 +52,7 @@ const GraphControls = ({ controls, values, onValueChange }: GraphControlsProps) 
       backgroundColor: 'white',
       borderRadius: '24px',
       padding: '32px 36px',
-      height: '752px',
+      height: '720px',
       width: '100%'
     }}>
       <Typography variant="h1">Graph Controls</Typography>

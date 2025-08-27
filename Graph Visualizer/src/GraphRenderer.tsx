@@ -128,6 +128,10 @@ function create2DFunctionGeometry(graph: Graph, resolution: number, controlValue
   let currentSegment: THREE.Vector3[] = []
   const segments: THREE.Vector3[][] = []
   
+  // Get scaling factors for coordinate transformation
+  const xScale = controlValues.xScale || 1
+  const yScale = controlValues.yScale || 1
+  
   for (let i = 0; i <= resolution; i++) {
     const x = -range + i * step
     try {
@@ -140,16 +144,20 @@ function create2DFunctionGeometry(graph: Graph, resolution: number, controlValue
         }
         currentSegment = []
       } else {
-        // Valid point - add to current segment
+        // Valid point - add to current segment with coordinate scaling
+        // Apply coordinate scaling for visual stretching/compression
+        const scaledX = x * xScale
+        const scaledY = y * yScale
+        
         // Apply Y-axis rotation if specified for Damped Oscillations
         if (graph.name.includes('Damped Oscillations') && controlValues.yRotation) {
           const yRotationDegrees = controlValues.yRotation || 0
           const yRotationRad = (yRotationDegrees * Math.PI) / 180
-          const xRotated = x * Math.cos(yRotationRad)
-          const zRotated = -x * Math.sin(yRotationRad)
-          currentSegment.push(new THREE.Vector3(xRotated, y, zRotated))
+          const xRotated = scaledX * Math.cos(yRotationRad)
+          const zRotated = -scaledX * Math.sin(yRotationRad)
+          currentSegment.push(new THREE.Vector3(xRotated, scaledY, zRotated))
         } else {
-          currentSegment.push(new THREE.Vector3(x, y, 0))
+          currentSegment.push(new THREE.Vector3(scaledX, scaledY, 0))
         }
       }
     } catch {
@@ -770,6 +778,7 @@ function calculateSurfaceZ(graph: Graph, x: number, y: number, controlValues: Re
   }
 }
 
+
 // Coordinate mapping helper function to map visual coordinates to graph-specific domains
 function mapCoordinateToGraphDomain(x: number, graphName: string, controlValues: Record<string, number> = {}): number {
   switch (graphName) {
@@ -785,10 +794,11 @@ function mapCoordinateToGraphDomain(x: number, graphName: string, controlValues:
     }
     
     case 'Photoelectric Effect': {
-      // Map x(-10 to +10) to frequency (0 to 15 * 10^14 Hz, visible to UV range)
-      const workFunction = controlValues.workFunction || 2
-      // Extend range beyond work function to show threshold behavior
-      return ((x + 10) / 20) * (workFunction + 10)
+      // Map x(-10 to +10) to frequency range (0 to user-defined max * 10^14 Hz)
+      // This controls ONLY the display range - work function should NOT affect frequency scale
+      const frequencyMax = controlValues.frequencyMax || 15
+      // Pure frequency range control - no dependency on work function
+      return ((x + 10) / 20) * frequencyMax
     }
     
     case 'Volume vs. Temperature (Charles\'s Law)':
@@ -827,17 +837,8 @@ function calculate2DFunction(graph: Graph, x: number, controlValues: Record<stri
   }
   
   if (graph.name === 'Reciprocal Function (Hyperbola)') {
-    // For reciprocal function y = k/x with proper scaling:
-    // xScale affects horizontal compression/expansion
-    // yScale affects vertical compression/expansion
-    const xScale = controlValues.xScale || 1
-    const yScale = controlValues.yScale || 1
-    
-    // Apply horizontal scaling: compress x-axis by xScale factor
-    const scaledX = x * xScale
-    
-    // Apply vertical scaling to the reciprocal result
-    return scaledX !== 0 ? yScale / scaledX : 0
+    // Pure mathematical function - scaling is handled in coordinate system
+    return x !== 0 ? 1 / x : 0
   }
   
   if (graph.name === 'Tangent Function') {
@@ -868,10 +869,8 @@ function calculate2DFunction(graph: Graph, x: number, controlValues: Record<stri
   
   if (graph.name === 'Logarithmic Function') {
     const base = controlValues.base || Math.E
-    const xScale = controlValues.xScale || 1
-    const yScale = controlValues.yScale || 1
-    const scaledX = x / xScale
-    return scaledX > 0 ? yScale * Math.log(scaledX) / Math.log(base) : 0
+    // Pure mathematical function - scaling is handled in coordinate system
+    return x > 0 ? Math.log(x) / Math.log(base) : 0
   }
   
   if (graph.name === 'Sine and Cosine Waves') {
@@ -944,7 +943,9 @@ function calculate2DFunction(graph: Graph, x: number, controlValues: Record<stri
   if (graph.name === 'I-V Characteristic of a Resistor') {
     // V = IR (linear through origin)
     const resistance = controlValues.R || controlValues.resistance || 2
-    return resistance * x
+    const currentScale = controlValues.I || 1
+    // Scale the input current (x) by the current control, then apply Ohm's law
+    return resistance * (x * currentScale)
   }
   
   if (graph.name === 'I-V Characteristic of a Diode') {
@@ -1021,10 +1022,15 @@ function calculate2DFunction(graph: Graph, x: number, controlValues: Record<stri
   }
   
   if (graph.name === 'Photoelectric Effect') {
-    // K_max = hf - φ (linear with threshold)
-    const workFunction = controlValues.phi || controlValues.workFunction || 2
+    // K_max = hf - φ (pure photoelectric equation)
+    const workFunction = controlValues.workFunction || 2
     const frequency = mapCoordinateToGraphDomain(x, graph.name, controlValues) // Map to frequency domain
-    return frequency > workFunction ? frequency - workFunction : 0
+    
+    // Pure photoelectric equation: K_max = hf - φ 
+    // (h is implicitly 1 in our units for simplicity)
+    const kineticEnergy = frequency > workFunction ? frequency - workFunction : 0
+    
+    return kineticEnergy
   }
   
   if (graph.name === 'Binding Energy per Nucleon') {

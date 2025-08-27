@@ -3,8 +3,10 @@
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 # Base Instructions:
+- use systems thinking principles while debugging and planning for a solution
 - always analyze the request and reply with how the implementation is going to be
 - always ask for permission to code after analysis and implementation plan is done
+- dont run "npm run dev" command 
 
 ## Project Overview
 
