@@ -9,7 +9,8 @@
       "Bash(npm run build:*)",
       "Bash(grep:*)",
       "Bash(jq:*)",
-      "Read(c:\\Users\\Cynthia\\Downloads/**)"
+      "Read(c:\\Users\\Cynthia\\Downloads/**)",
+      "Bash(node:*)"
     ],
     "deny": [],
     "ask": [],

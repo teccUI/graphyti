@@ -2,6 +2,7 @@ import { useMemo } from 'react'
 import * as THREE from 'three'
 import { evaluate } from 'mathjs'
 import type { CustomGraph } from './utils/customEquationUtils'
+import { validateDomain } from './utils/customEquationUtils'
 
 interface Graph {
   id: string
@@ -1554,11 +1555,18 @@ function createCustom3DSurface(equation: string, scope: Record<string, number>):
       const y = -range + j * step
       
       try {
-        const evalScope = { ...scope, x, y }
-        const z = evaluate(equation, evalScope)
+        // Validate domain for 3D surfaces (primarily affects x coordinate)
+        const domainCheck = validateDomain(equation, x, y)
+        let z = 0
+        
+        if (domainCheck.isValid) {
+          const evalScope = { ...scope, x, y }
+          const result = evaluate(equation, evalScope)
+          z = typeof result === 'number' && isFinite(result) ? result : 0
+        }
         
         // Clamp z values to reasonable range
-        const clampedZ = Math.max(-50, Math.min(50, typeof z === 'number' ? z : 0))
+        const clampedZ = Math.max(-50, Math.min(50, z))
         
         vertices.push(x, clampedZ, y) // Note: Three.js uses Y-up, so we swap y and z
       } catch {
@@ -1595,27 +1603,67 @@ function createCustom2DCurve(equation: string, scope: Record<string, number>): T
   const range = 10
   const step = (2 * range) / resolution
   
-  const vertices: number[] = []
+  let currentSegment: THREE.Vector3[] = []
+  const segments: THREE.Vector3[][] = []
   
   // Try to evaluate as y = f(x)
   for (let i = 0; i <= resolution; i++) {
     const x = -range + i * step
     
     try {
+      // Validate domain before evaluation
+      const domainCheck = validateDomain(equation, x)
+      if (!domainCheck.isValid) {
+        // Domain issue - end current segment and start new one
+        if (currentSegment.length > 1) {
+          segments.push([...currentSegment])
+        }
+        currentSegment = []
+        continue
+      }
+      
       const evalScope = { ...scope, x }
       const y = evaluate(equation, evalScope)
       
-      // Clamp y values to reasonable range
-      const clampedY = Math.max(-50, Math.min(50, typeof y === 'number' ? y : 0))
-      
-      vertices.push(x, clampedY, 0) // 2D curve in XY plane
+      if (isNaN(y) || !isFinite(y)) {
+        // Invalid result - end current segment
+        if (currentSegment.length > 1) {
+          segments.push([...currentSegment])
+        }
+        currentSegment = []
+      } else {
+        // Valid point - add to current segment
+        const clampedY = Math.max(-50, Math.min(50, y))
+        currentSegment.push(new THREE.Vector3(x, clampedY, 0))
+      }
     } catch {
-      vertices.push(x, 0, 0) // Default to y=0 if evaluation fails
+      // Error encountered - end current segment
+      if (currentSegment.length > 1) {
+        segments.push([...currentSegment])
+      }
+      currentSegment = []
+    }
+  }
+  
+  // Add final segment if it exists
+  if (currentSegment.length > 1) {
+    segments.push(currentSegment)
+  }
+  
+  // Find the longest continuous segment to display
+  if (segments.length === 0) {
+    return new THREE.BufferGeometry().setFromPoints([])
+  }
+  
+  let longestSegment = segments[0]
+  for (const segment of segments) {
+    if (segment.length > longestSegment.length) {
+      longestSegment = segment
     }
   }
   
   const geometry = new THREE.BufferGeometry()
-  geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3))
+  geometry.setFromPoints(longestSegment)
   
   return geometry
 }

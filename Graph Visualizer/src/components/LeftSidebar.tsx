@@ -358,14 +358,16 @@ export default function LeftSidebar({ selectedGraph, selectedCategory, onGraphCh
             }
           },
           '& .MuiInputBase-input': {
-            padding: '12px',
-            fontFamily: 'monospace',
+           fontFamily: 'monospace',
             fontSize: '14px',
             '&::placeholder': {
               fontFamily: 'Inter, sans-serif',
-              fontSize: '11px',
+              fontSize: '12px',
               color: '#787878',
               opacity: 1
+            },
+            '&:placeholder-shown': {
+              padding: '0px'
             }
           }
         }}
