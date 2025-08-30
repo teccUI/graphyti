@@ -87,7 +87,7 @@ export default function LeftSidebar({ selectedGraph, selectedCategory, onGraphCh
               return <Typography sx={{ 
                 fontFamily: 'Inter, sans-serif',
                 fontWeight: 400,
-                fontSize: '11px',
+                fontSize: '14px',
                 lineHeight: 'auto',
                 letterSpacing: '-0.2px',
                 color: isCustomMode ? '#666666' : '#787878' 
@@ -144,8 +144,25 @@ export default function LeftSidebar({ selectedGraph, selectedCategory, onGraphCh
             },
             '&.Mui-disabled': {
               backgroundColor: '#f8f8f8',
+              cursor: 'not-allowed !important',
               '& .MuiSelect-select': {
-                color: '#666666'
+                color: '#666666',
+                cursor: 'not-allowed !important'
+              },
+              '& .MuiSelect-icon': {
+                cursor: 'not-allowed !important'
+              },
+              '& .MuiInputBase-input': {
+                cursor: 'not-allowed !important'
+              },
+              '& *': {
+                cursor: 'not-allowed !important'
+              },
+              '&:hover': {
+                cursor: 'not-allowed !important'
+              },
+              '&:hover *': {
+                cursor: 'not-allowed !important'
               }
             }
           }}
@@ -210,7 +227,7 @@ export default function LeftSidebar({ selectedGraph, selectedCategory, onGraphCh
                 return <Typography sx={{ 
                   fontFamily: 'Inter, sans-serif',
                   fontWeight: 400,
-                  fontSize: '11px',
+                  fontSize: '14px',
                   lineHeight: 'auto',
                   letterSpacing: '-0.2px',
                   color: isCustomMode ? '#666666' : '#787878' 
@@ -219,7 +236,7 @@ export default function LeftSidebar({ selectedGraph, selectedCategory, onGraphCh
               return <Typography sx={{ 
                 fontFamily: 'Inter, sans-serif',
                 fontWeight: 400,
-                fontSize: '11px',
+                fontSize: '14px',
                 lineHeight: 'auto',
                 letterSpacing: '-0.2px',
                 color: isCustomMode ? '#666666' : '#787878' 
@@ -277,8 +294,25 @@ export default function LeftSidebar({ selectedGraph, selectedCategory, onGraphCh
             },
             '&.Mui-disabled': {
               backgroundColor: '#f8f8f8',
+              cursor: 'not-allowed !important',
               '& .MuiSelect-select': {
-                color: '#666666'
+                color: '#666666',
+                cursor: 'not-allowed !important'
+              },
+              '& .MuiSelect-icon': {
+                cursor: 'not-allowed !important'
+              },
+              '& .MuiInputBase-input': {
+                cursor: 'not-allowed !important'
+              },
+              '& *': {
+                cursor: 'not-allowed !important'
+              },
+              '&:hover': {
+                cursor: 'not-allowed !important'
+              },
+              '&:hover *': {
+                cursor: 'not-allowed !important'
               }
             }
           }}

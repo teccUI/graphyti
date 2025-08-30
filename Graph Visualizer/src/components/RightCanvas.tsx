@@ -341,7 +341,13 @@ export default function RightCanvas({ selectedGraph, onPreviousGraph, onNextGrap
                   height: '30px', 
                   border: '1px solid #e0e0e0', 
                   borderRadius: '8px',
-                  opacity: isCustomMode ? 0.5 : 1
+                  opacity: isCustomMode ? 0.5 : 1,
+                  '&.Mui-disabled': {
+                    cursor: 'not-allowed',
+                    '&:hover': {
+                      cursor: 'not-allowed'
+                    }
+                  }
                 }}
                 onClick={isCustomMode ? undefined : onPreviousGraph}
                 disabled={isCustomMode}
@@ -373,7 +379,13 @@ export default function RightCanvas({ selectedGraph, onPreviousGraph, onNextGrap
                   height: '30px', 
                   border: '1px solid #e0e0e0', 
                   borderRadius: '8px',
-                  opacity: isCustomMode ? 0.5 : 1
+                  opacity: isCustomMode ? 0.5 : 1,
+                  '&.Mui-disabled': {
+                    cursor: 'not-allowed',
+                    '&:hover': {
+                      cursor: 'not-allowed'
+                    }
+                  }
                 }}
                 onClick={isCustomMode ? undefined : onNextGraph}
                 disabled={isCustomMode}
@@ -610,7 +622,13 @@ export default function RightCanvas({ selectedGraph, onPreviousGraph, onNextGrap
                     height: '30px', 
                     border: '1px solid #e0e0e0', 
                     borderRadius: '8px',
-                    opacity: isCustomMode ? 0.5 : 1
+                    opacity: isCustomMode ? 0.5 : 1,
+                    '&.Mui-disabled': {
+                      cursor: 'not-allowed',
+                      '&:hover': {
+                        cursor: 'not-allowed'
+                      }
+                    }
                   }}
                   onClick={isCustomMode ? undefined : onPreviousGraph}
                   disabled={isCustomMode}
@@ -626,7 +644,13 @@ export default function RightCanvas({ selectedGraph, onPreviousGraph, onNextGrap
                     height: '30px', 
                     border: '1px solid #e0e0e0', 
                     borderRadius: '8px',
-                    opacity: isCustomMode ? 0.5 : 1
+                    opacity: isCustomMode ? 0.5 : 1,
+                    '&.Mui-disabled': {
+                      cursor: 'not-allowed',
+                      '&:hover': {
+                        cursor: 'not-allowed'
+                      }
+                    }
                   }}
                   onClick={isCustomMode ? undefined : onNextGraph}
                   disabled={isCustomMode}

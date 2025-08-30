@@ -12,7 +12,7 @@ export const theme = createTheme({
       color: '#111',
     },
     body1: {
-      fontSize: '12px',
+      fontSize: '14px',
       lineHeight: 1.5,
       color: '#111',
     },
@@ -60,6 +60,28 @@ export const theme = createTheme({
             '&:hover': {
               borderColor: '#DFDFDF',
             },
+          },
+        },
+      },
+    },
+    MuiSelect: {
+      styleOverrides: {
+        select: {
+          fontSize: '14px !important',
+          fontFamily: 'Inter, sans-serif',
+          fontWeight: 400,
+          lineHeight: 'auto',
+          letterSpacing: '-0.2px',
+        },
+      },
+    },
+    MuiTextField: {
+      styleOverrides: {
+        root: {
+          '& .MuiInputBase-input': {
+            fontSize: '14px !important',
+            fontFamily: 'monospace',
+            lineHeight: 'auto',
           },
         },
       },
