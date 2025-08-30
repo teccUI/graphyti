@@ -7,6 +7,7 @@ import { OrbitControls as OrbitControlsImpl } from 'three-stdlib'
 import GraphRenderer from '../GraphRenderer'
 import CoordinateTooltip from './CoordinateTooltip'
 import CanvasInspector from './CanvasInspector'
+import type { CustomGraph } from '../utils/customEquationUtils'
 
 interface Graph {
   id: string
@@ -24,9 +25,11 @@ interface RightCanvasProps {
   onPreviousGraph: () => void
   onNextGraph: () => void
   controlValues: Record<string, number>
+  customGraph: CustomGraph | null
+  isCustomMode: boolean
 }
 
-export default function RightCanvas({ selectedGraph, onPreviousGraph, onNextGraph, controlValues }: RightCanvasProps) {
+export default function RightCanvas({ selectedGraph, onPreviousGraph, onNextGraph, controlValues, customGraph, isCustomMode }: RightCanvasProps) {
   const controlsRef = useRef<OrbitControlsImpl>(null)
   const [isRotating, setIsRotating] = useState(false)
   const [isPanMode, setIsPanMode] = useState(false)
@@ -286,6 +289,7 @@ export default function RightCanvas({ selectedGraph, onPreviousGraph, onNextGrap
           
           {/* Dynamic Graph Rendering */}
           {selectedGraph && <GraphRenderer graph={selectedGraph} controlValues={controlValues} />}
+          {isCustomMode && customGraph && <GraphRenderer customGraph={customGraph} controlValues={controlValues} />}
           
           {/* Coordinate Inspection */}
           <CanvasInspector onInspectionUpdate={setInspectionState} />
@@ -332,10 +336,17 @@ export default function RightCanvas({ selectedGraph, onPreviousGraph, onNextGrap
               }}
             >
               <IconButton 
-                sx={{ width: '30px', height: '30px', border: '1px solid #e0e0e0', borderRadius: '8px' }}
-                onClick={onPreviousGraph}
+                sx={{ 
+                  width: '30px', 
+                  height: '30px', 
+                  border: '1px solid #e0e0e0', 
+                  borderRadius: '8px',
+                  opacity: isCustomMode ? 0.5 : 1
+                }}
+                onClick={isCustomMode ? undefined : onPreviousGraph}
+                disabled={isCustomMode}
               >
-                <CaretLeft size={16} color="#111111" />
+                <CaretLeft size={16} color={isCustomMode ? "#666666" : "#111111"} />
               </IconButton>
             </Tooltip>
             
@@ -357,10 +368,17 @@ export default function RightCanvas({ selectedGraph, onPreviousGraph, onNextGrap
               }}
             >
               <IconButton 
-                sx={{ width: '30px', height: '30px', border: '1px solid #e0e0e0', borderRadius: '8px' }}
-                onClick={onNextGraph}
+                sx={{ 
+                  width: '30px', 
+                  height: '30px', 
+                  border: '1px solid #e0e0e0', 
+                  borderRadius: '8px',
+                  opacity: isCustomMode ? 0.5 : 1
+                }}
+                onClick={isCustomMode ? undefined : onNextGraph}
+                disabled={isCustomMode}
               >
-                <CaretRight size={16} color="#111111" />
+                <CaretRight size={16} color={isCustomMode ? "#666666" : "#111111"} />
               </IconButton>
             </Tooltip>
             
@@ -587,19 +605,33 @@ export default function RightCanvas({ selectedGraph, onPreviousGraph, onNextGrap
             <ButtonGroup variant="outlined" size="small" sx={{ gap: '4px', justifyContent: 'center' }}>
               <Tooltip title="Previous Graph" placement="top">
                 <IconButton 
-                  sx={{ width: '30px', height: '30px', border: '1px solid #e0e0e0', borderRadius: '8px' }}
-                  onClick={onPreviousGraph}
+                  sx={{ 
+                    width: '30px', 
+                    height: '30px', 
+                    border: '1px solid #e0e0e0', 
+                    borderRadius: '8px',
+                    opacity: isCustomMode ? 0.5 : 1
+                  }}
+                  onClick={isCustomMode ? undefined : onPreviousGraph}
+                  disabled={isCustomMode}
                 >
-                  <CaretLeft size={16} color="#111111" />
+                  <CaretLeft size={16} color={isCustomMode ? "#666666" : "#111111"} />
                 </IconButton>
               </Tooltip>
               
               <Tooltip title="Next Graph" placement="top">
                 <IconButton 
-                  sx={{ width: '30px', height: '30px', border: '1px solid #e0e0e0', borderRadius: '8px' }}
-                  onClick={onNextGraph}
+                  sx={{ 
+                    width: '30px', 
+                    height: '30px', 
+                    border: '1px solid #e0e0e0', 
+                    borderRadius: '8px',
+                    opacity: isCustomMode ? 0.5 : 1
+                  }}
+                  onClick={isCustomMode ? undefined : onNextGraph}
+                  disabled={isCustomMode}
                 >
-                  <CaretRight size={16} color="#111111" />
+                  <CaretRight size={16} color={isCustomMode ? "#666666" : "#111111"} />
                 </IconButton>
               </Tooltip>
               
@@ -705,7 +737,7 @@ export default function RightCanvas({ selectedGraph, onPreviousGraph, onNextGrap
       </Box>
 
       {/* Floating Formula Display */}
-      {selectedGraph && (
+      {((selectedGraph && !isCustomMode) || (isCustomMode && customGraph)) && (
         <Box sx={{
           position: 'absolute',
           top: '34px',
@@ -717,16 +749,6 @@ export default function RightCanvas({ selectedGraph, onPreviousGraph, onNextGrap
           maxWidth: '300px',
           zIndex: 1000
         }}>
-          {/* <Typography sx={{
-            fontSize: '12px',
-            fontWeight: 600,
-            lineHeight: 'auto',
-            letterSpacing: '-0.2px',
-            marginBottom: '6px',
-            color: '#787878'
-          }}>
-            Formula
-          </Typography> */}
           <Typography sx={{
             fontSize: '14px',
             fontWeight: 400,
@@ -737,7 +759,7 @@ export default function RightCanvas({ selectedGraph, onPreviousGraph, onNextGrap
             wordBreak: 'break-all',
             whiteSpace: 'pre-wrap'
           }}>
-            {selectedGraph.equation_latex}
+            {isCustomMode && customGraph ? customGraph.equation : selectedGraph?.equation_latex}
           </Typography>
         </Box>
       )}
@@ -747,8 +769,10 @@ export default function RightCanvas({ selectedGraph, onPreviousGraph, onNextGrap
         visible={inspectionState.isVisible}
         coordinates={inspectionState.coordinates}
         mousePosition={inspectionState.mousePosition}
-        graph={selectedGraph}
+        graph={isCustomMode ? null : selectedGraph}
         controlValues={controlValues}
+        customGraph={customGraph}
+        isCustomMode={isCustomMode}
       />
 
     </Box>

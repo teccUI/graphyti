@@ -1,5 +1,5 @@
 // React is not used directly in this file, removed unused import
-import { Box, Typography, Select, MenuItem, FormControl, IconButton } from '@mui/material'
+import { Box, Typography, Select, MenuItem, FormControl, IconButton, TextField } from '@mui/material'
 import { EnvelopeSimple, LinkedinLogo, CaretDown } from 'phosphor-react'
 import { getAllCategories, getGraphsByCategory, getGraphById } from '../utils/graphUtils'
 import type { Graph } from '../utils/graphUtils'
@@ -10,9 +10,12 @@ interface LeftSidebarProps {
   selectedCategory: string
   onGraphChange: (graphId: string) => void
   onCategoryChange: (categoryName: string) => void
+  customEquation: string
+  onCustomEquationChange: (equation: string) => void
+  isCustomMode: boolean
 }
 
-export default function LeftSidebar({ selectedGraph, selectedCategory, onGraphChange, onCategoryChange }: LeftSidebarProps) {
+export default function LeftSidebar({ selectedGraph, selectedCategory, onGraphChange, onCategoryChange, customEquation, onCustomEquationChange, isCustomMode }: LeftSidebarProps) {
   const allCategories = getAllCategories().sort()
   const categoryGraphs = selectedCategory ? getGraphsByCategory(selectedCategory).sort((a, b) => a.name.localeCompare(b.name)) : []
 
@@ -78,6 +81,7 @@ export default function LeftSidebar({ selectedGraph, selectedCategory, onGraphCh
           value={selectedCategory}
           onChange={(e) => handleCategoryChange(e.target.value)}
           displayEmpty
+          disabled={isCustomMode}
           renderValue={(selected) => {
             if (!selected) {
               return <Typography sx={{ 
@@ -86,7 +90,7 @@ export default function LeftSidebar({ selectedGraph, selectedCategory, onGraphCh
                 fontSize: '11px',
                 lineHeight: 'auto',
                 letterSpacing: '-0.2px',
-                color: '#787878' 
+                color: isCustomMode ? '#666666' : '#787878' 
               }}>select a category first</Typography>
             }
             return selected
@@ -137,6 +141,12 @@ export default function LeftSidebar({ selectedGraph, selectedCategory, onGraphCh
             fontSize: '14px',
             '& .MuiOutlinedInput-notchedOutline': {
               border: 'none'
+            },
+            '&.Mui-disabled': {
+              backgroundColor: '#f8f8f8',
+              '& .MuiSelect-select': {
+                color: '#666666'
+              }
             }
           }}
           IconComponent={() => (
@@ -147,7 +157,7 @@ export default function LeftSidebar({ selectedGraph, selectedCategory, onGraphCh
               transform: 'translateY(-50%)',
               pointerEvents: 'none' 
             }}>
-              <CaretDown size={16} color="#787878" />
+              <CaretDown size={16} color={isCustomMode ? "#666666" : "#787878"} />
             </Box>
           )}
         >
@@ -193,7 +203,7 @@ export default function LeftSidebar({ selectedGraph, selectedCategory, onGraphCh
           value={selectedGraph && categoryGraphs.some(g => g.id === selectedGraph.id) ? selectedGraph.id : ''}
           onChange={(e) => onGraphChange(e.target.value)}
           displayEmpty
-          disabled={!selectedCategory}
+          disabled={!selectedCategory || isCustomMode}
           renderValue={(selected) => {
             if (!selected) {
               if (!selectedCategory) {
@@ -203,7 +213,7 @@ export default function LeftSidebar({ selectedGraph, selectedCategory, onGraphCh
                   fontSize: '11px',
                   lineHeight: 'auto',
                   letterSpacing: '-0.2px',
-                  color: '#787878' 
+                  color: isCustomMode ? '#666666' : '#787878' 
                 }}>select a category first</Typography>
               }
               return <Typography sx={{ 
@@ -212,7 +222,7 @@ export default function LeftSidebar({ selectedGraph, selectedCategory, onGraphCh
                 fontSize: '11px',
                 lineHeight: 'auto',
                 letterSpacing: '-0.2px',
-                color: '#787878' 
+                color: isCustomMode ? '#666666' : '#787878' 
               }}>select a formula to render</Typography>
             }
             const graph = getGraphById(selected)
@@ -268,7 +278,7 @@ export default function LeftSidebar({ selectedGraph, selectedCategory, onGraphCh
             '&.Mui-disabled': {
               backgroundColor: '#f8f8f8',
               '& .MuiSelect-select': {
-                color: '#c0c0c0'
+                color: '#666666'
               }
             }
           }}
@@ -280,7 +290,7 @@ export default function LeftSidebar({ selectedGraph, selectedCategory, onGraphCh
               transform: 'translateY(-50%)',
               pointerEvents: 'none' 
             }}>
-              <CaretDown size={16} color={selectedCategory ? "#787878" : "#c0c0c0"} />
+              <CaretDown size={16} color={(selectedCategory && !isCustomMode) ? "#787878" : "#666666"} />
             </Box>
           )}
         >
@@ -309,6 +319,57 @@ export default function LeftSidebar({ selectedGraph, selectedCategory, onGraphCh
           ))}
         </Select>
       </FormControl>
+
+      {/* Custom Equation Input */}
+      <Typography variant="subtitle1" sx={{ 
+        marginBottom: '8px',
+        fontSize: '14px',
+        fontWeight: 500,
+        lineHeight: 'auto',
+        letterSpacing: '-0.2px'
+      }}>
+        Custom equation
+      </Typography>
+      
+      <TextField
+        value={customEquation}
+        onChange={(e) => onCustomEquationChange(e.target.value)}
+        placeholder="Enter your equation (e.g., x^2 + y^2, sin(x)*cos(y))"
+        multiline
+        maxRows={4}
+        fullWidth
+        sx={{
+          marginBottom: '24px',
+          '& .MuiOutlinedInput-root': {
+            minHeight: '44px',
+            maxHeight: '200px',
+            borderRadius: '8px',
+            border: '1px solid #DFDFDF',
+            fontSize: '14px',
+            fontFamily: 'Inter, sans-serif',
+            '& fieldset': {
+              border: 'none'
+            },
+            '&:hover fieldset': {
+              border: 'none'
+            },
+            '&.Mui-focused fieldset': {
+              border: 'none'
+            }
+          },
+          '& .MuiInputBase-input': {
+            padding: '12px',
+            fontFamily: 'monospace',
+            fontSize: '14px',
+            '&::placeholder': {
+              fontFamily: 'Inter, sans-serif',
+              fontSize: '11px',
+              color: '#787878',
+              opacity: 1
+            }
+          }
+        }}
+      />
 
       {/* Formula Display
       {selectedGraph && (

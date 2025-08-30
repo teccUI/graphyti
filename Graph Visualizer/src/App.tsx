@@ -5,6 +5,7 @@ import RightCanvas from './components/RightCanvas'
 import GraphControls from './components/GraphControls'
 import { getGraphById, getAllCategories, getGraphsByCategory } from './utils/graphUtils'
 import type { Graph } from './utils/graphUtils'
+import { createCustomGraph, type CustomGraph } from './utils/customEquationUtils'
 import graphControls from '../graphControls.json'
 
 function App() {
@@ -28,9 +29,18 @@ function App() {
   const [selectedCategory, setSelectedCategory] = useState<string>(getInitialCategory())
   const [selectedGraph, setSelectedGraph] = useState<Graph | null>(getInitialGraph())
   const [controlValues, setControlValues] = useState<Record<string, number>>({})
+  const [customEquation, setCustomEquation] = useState<string>('')
+  const [customGraph, setCustomGraph] = useState<CustomGraph | null>(null)
+  const [isCustomMode, setIsCustomMode] = useState<boolean>(false)
 
   useEffect(() => {
-    if (selectedGraph) {
+    if (isCustomMode && customGraph) {
+      const defaultValues: Record<string, number> = {}
+      customGraph.variables.forEach(variable => {
+        defaultValues[variable.name] = variable.defaultValue
+      })
+      setControlValues(defaultValues)
+    } else if (selectedGraph) {
       const graphControlData = graphControls.find(gc => gc.id === selectedGraph.id)
       if (graphControlData) {
         const defaultValues: Record<string, number> = {}
@@ -40,7 +50,7 @@ function App() {
         setControlValues(defaultValues)
       }
     }
-  }, [selectedGraph])
+  }, [selectedGraph, customGraph, isCustomMode])
 
   const handleCategoryChange = (categoryName: string) => {
     setSelectedCategory(categoryName)
@@ -67,6 +77,31 @@ function App() {
       ...prev,
       [controlName]: value
     }))
+  }
+
+  const handleCustomEquationChange = (equation: string) => {
+    setCustomEquation(equation)
+    
+    if (equation.trim()) {
+      const customGraphData = createCustomGraph(equation)
+      if (customGraphData) {
+        setCustomGraph(customGraphData)
+        setIsCustomMode(true)
+        // Reset predefined graph selection when entering custom mode
+        setSelectedGraph(null)
+      }
+    } else {
+      // If equation is empty, exit custom mode
+      setCustomGraph(null)
+      setIsCustomMode(false)
+      // Restore previous graph selection
+      if (!selectedGraph && selectedCategory) {
+        const categoryGraphs = getGraphsByCategory(selectedCategory).sort((a, b) => a.name.localeCompare(b.name))
+        if (categoryGraphs.length > 0) {
+          setSelectedGraph(categoryGraphs[0])
+        }
+      }
+    }
   }
 
   const handlePreviousGraph = () => {
@@ -144,6 +179,9 @@ function App() {
               selectedCategory={selectedCategory}
               onGraphChange={handleGraphChange}
               onCategoryChange={handleCategoryChange}
+              customEquation={customEquation}
+              onCustomEquationChange={handleCustomEquationChange}
+              isCustomMode={isCustomMode}
             />
           </Box>
           
@@ -157,6 +195,8 @@ function App() {
               onPreviousGraph={handlePreviousGraph}
               onNextGraph={handleNextGraph}
               controlValues={controlValues}
+              customGraph={customGraph}
+              isCustomMode={isCustomMode}
             />
           </Box>
         </Box>
@@ -168,10 +208,12 @@ function App() {
           flexShrink: 0
         }}>
           <GraphControls 
-            controls={selectedGraph ? graphControls.find(gc => gc.id === selectedGraph.id)?.controls || [] : []}
+            controls={isCustomMode && customGraph ? customGraph.variables : (selectedGraph ? graphControls.find(gc => gc.id === selectedGraph.id)?.controls || [] : [])}
             values={controlValues}
             onValueChange={handleControlValueChange}
             selectedGraph={selectedGraph}
+            customGraph={customGraph}
+            isCustomMode={isCustomMode}
           />
         </Box>
       </Box>

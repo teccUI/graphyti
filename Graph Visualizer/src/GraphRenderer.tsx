@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import * as THREE from 'three'
 import { evaluate } from 'mathjs'
+import type { CustomGraph } from './utils/customEquationUtils'
 
 interface Graph {
   id: string
@@ -14,15 +15,23 @@ interface Graph {
 }
 
 interface GraphRendererProps {
-  graph: Graph
+  graph?: Graph
+  customGraph?: CustomGraph
   controlValues: Record<string, number>
 }
 
-function GraphRenderer({ graph, controlValues }: GraphRendererProps) {
+function GraphRenderer({ graph, customGraph, controlValues }: GraphRendererProps) {
   const geometry = useMemo(() => {
     const resolution = controlValues.resolution || 50
     
     try {
+      // Handle custom graphs
+      if (customGraph) {
+        return createCustomGraphGeometry(customGraph, controlValues)
+      }
+      
+      if (!graph) return new THREE.BufferGeometry()
+      
       // Some shapes are better represented with built-in Three.js geometries
       if (graph.name === 'Cylinder' || graph.name === 'Sphere' || graph.name === 'Cone' || 
           graph.name === 'Torus (Doughnut)' || graph.name === 'Ellipsoid' || 
@@ -65,12 +74,28 @@ function GraphRenderer({ graph, controlValues }: GraphRendererProps) {
           return createDefaultGeometry(graph, controlValues)
       }
     } catch (error) {
-      console.warn(`Error rendering graph ${graph.name}:`, error)
-      return createDefaultGeometry(graph, controlValues)
+      console.warn(`Error rendering graph ${graph?.name}:`, error)
+      return graph ? createDefaultGeometry(graph, controlValues) : new THREE.BufferGeometry()
     }
-  }, [graph, controlValues])
+  }, [graph, customGraph, controlValues])
 
   const material = useMemo(() => {
+    // Handle custom graph materials
+    if (customGraph) {
+      if (customGraph.type === '2D') {
+        return new THREE.LineBasicMaterial({ color: '#ff6b35', linewidth: 2 })
+      }
+      return new THREE.MeshStandardMaterial({ 
+        color: '#4a9eff', 
+        wireframe: false,
+        transparent: true,
+        opacity: 0.8,
+        side: THREE.DoubleSide
+      })
+    }
+    
+    if (!graph) return new THREE.MeshStandardMaterial({ color: '#4a9eff' })
+    
     if (graph.type.includes('Curve') || graph.type === '2D Function') {
       return new THREE.LineBasicMaterial({ color: '#ff6b35', linewidth: 2 })
     }
@@ -81,7 +106,19 @@ function GraphRenderer({ graph, controlValues }: GraphRendererProps) {
       opacity: 0.8,
       side: THREE.DoubleSide
     })
-  }, [graph.type])
+  }, [graph, customGraph])
+
+  // Handle custom graph rendering
+  if (customGraph) {
+    if (customGraph.type === '2D') {
+      return <primitive object={new THREE.Line(geometry, material)} />
+    }
+    return <mesh geometry={geometry} material={material} />
+  }
+
+  if (!graph) {
+    return <mesh geometry={geometry} material={material} />
+  }
 
   // Determine if this should be rendered as a filled surface or line
   const shouldRenderAsFilled = graph.name === 'Circle' || graph.name === 'Ellipse' || 
@@ -1474,6 +1511,113 @@ function convertLatexToMathjs(latex: string): string {
     .replace(/(\^(?:\d+|\([^)]+\)))([a-z])/gi, '$1*$2')
     
   return expr
+}
+
+// Function to create geometry for custom graphs
+function createCustomGraphGeometry(customGraph: CustomGraph, controlValues: Record<string, number>): THREE.BufferGeometry {
+  const { equation, type, variables } = customGraph
+  
+  try {
+    // Prepare variable values for evaluation
+    const scope: Record<string, number> = {}
+    variables.forEach(variable => {
+      scope[variable.name] = controlValues[variable.name] || variable.defaultValue
+    })
+
+    if (type === '3D') {
+      // For 3D surfaces, try to render as z = f(x, y)
+      return createCustom3DSurface(equation, scope)
+    } else {
+      // For 2D curves, try to render as y = f(x) or parametric
+      return createCustom2DCurve(equation, scope)
+    }
+  } catch (error) {
+    console.error('Error creating custom graph geometry:', error)
+    // Return empty geometry on error
+    return new THREE.BufferGeometry()
+  }
+}
+
+// Create 3D surface geometry from custom equation
+function createCustom3DSurface(equation: string, scope: Record<string, number>): THREE.BufferGeometry {
+  const resolution = 50
+  const range = 10
+  const step = (2 * range) / resolution
+  
+  const vertices: number[] = []
+  const indices: number[] = []
+  
+  // Try to evaluate the equation as z = f(x, y)
+  for (let i = 0; i <= resolution; i++) {
+    for (let j = 0; j <= resolution; j++) {
+      const x = -range + i * step
+      const y = -range + j * step
+      
+      try {
+        const evalScope = { ...scope, x, y }
+        const z = evaluate(equation, evalScope)
+        
+        // Clamp z values to reasonable range
+        const clampedZ = Math.max(-50, Math.min(50, typeof z === 'number' ? z : 0))
+        
+        vertices.push(x, clampedZ, y) // Note: Three.js uses Y-up, so we swap y and z
+      } catch {
+        vertices.push(x, 0, y) // Default to z=0 if evaluation fails
+      }
+    }
+  }
+  
+  // Create indices for triangles
+  for (let i = 0; i < resolution; i++) {
+    for (let j = 0; j < resolution; j++) {
+      const a = i * (resolution + 1) + j
+      const b = a + resolution + 1
+      const c = a + 1
+      const d = b + 1
+      
+      // Two triangles per quad
+      indices.push(a, b, c)
+      indices.push(b, d, c)
+    }
+  }
+  
+  const geometry = new THREE.BufferGeometry()
+  geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3))
+  geometry.setIndex(indices)
+  geometry.computeVertexNormals()
+  
+  return geometry
+}
+
+// Create 2D curve geometry from custom equation
+function createCustom2DCurve(equation: string, scope: Record<string, number>): THREE.BufferGeometry {
+  const resolution = 200
+  const range = 10
+  const step = (2 * range) / resolution
+  
+  const vertices: number[] = []
+  
+  // Try to evaluate as y = f(x)
+  for (let i = 0; i <= resolution; i++) {
+    const x = -range + i * step
+    
+    try {
+      const evalScope = { ...scope, x }
+      const y = evaluate(equation, evalScope)
+      
+      // Clamp y values to reasonable range
+      const clampedY = Math.max(-50, Math.min(50, typeof y === 'number' ? y : 0))
+      
+      vertices.push(x, clampedY, 0) // 2D curve in XY plane
+    } catch {
+      vertices.push(x, 0, 0) // Default to y=0 if evaluation fails
+    }
+  }
+  
+  const geometry = new THREE.BufferGeometry()
+  geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3))
+  
+  return geometry
 }
 
 export default GraphRenderer

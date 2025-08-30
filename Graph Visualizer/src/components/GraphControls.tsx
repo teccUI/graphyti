@@ -2,6 +2,7 @@ import { Box, Typography, Slider } from '@mui/material'
 import TabSystem from './TabSystem'
 import GraphInformation from './GraphInformation'
 import type { Graph } from '../utils/graphUtils'
+import type { CustomGraph } from '../utils/customEquationUtils'
 
 interface Control {
   name: string
@@ -17,9 +18,11 @@ interface GraphControlsProps {
   values: Record<string, number>
   onValueChange: (controlName: string, value: number) => void
   selectedGraph: Graph | null
+  customGraph: CustomGraph | null
+  isCustomMode: boolean
 }
 
-const GraphControls = ({ controls, values, onValueChange, selectedGraph }: GraphControlsProps) => {
+const GraphControls = ({ controls, values, onValueChange, selectedGraph, customGraph, isCustomMode }: GraphControlsProps) => {
   const shouldEnableScrolling = controls.length > 7
   
   const scrollableStyles = {
@@ -55,7 +58,10 @@ const GraphControls = ({ controls, values, onValueChange, selectedGraph }: Graph
   const graphControlsContent = (
     <Box sx={{ display: 'flex', flexDirection: 'column' }}>
       <Typography variant="body1" sx={{ marginBottom: '12px' }}>
-        Dynamically alter the graphs by adjusting the variables provided in the controls. By modifying parameters such as the range, scale, or coefficients, students can observe real-time changes in the 3D visualizations.
+        {isCustomMode 
+          ? 'Dynamically alter your custom graph by adjusting the detected variables. These controls are automatically generated based on the variables in your equation.'
+          : 'Dynamically alter the graphs by adjusting the variables provided in the controls. By modifying parameters such as the range, scale, or coefficients, students can observe real-time changes in the 3D visualizations.'
+        }
       </Typography>
       <Typography sx={{ 
         marginTop: '36px',
@@ -164,7 +170,7 @@ const GraphControls = ({ controls, values, onValueChange, selectedGraph }: Graph
         tabLabels={['Graph Controls', 'Information']}
       >
         {graphControlsContent}
-        <GraphInformation selectedGraph={selectedGraph} />
+        <GraphInformation selectedGraph={selectedGraph} customGraph={customGraph} isCustomMode={isCustomMode} />
       </TabSystem>
     </Box>
   )
